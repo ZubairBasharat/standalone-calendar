@@ -2,12 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import interactionPlugin from '@fullcalendar/interaction'
 import resourceTimelinePlugin from '@fullcalendar/resource-timeline'
-import { clients, colorMap, type Client, type ResourceExtendedProps } from '@/helpers/common'
+import { clients, colorMap, events, type Client, type EventType, type ResourceExtendedProps } from '@/helpers/common'
 import SearchCarerDropdown from '@/components/SearchCareerDropdown'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Clock } from 'lucide-react'
 import { cn } from './lib/utils'
 import { DatePickerDropdown } from './components/DatePickerCalendar'
+import EventListItem from './components/calendar/EventListItem'
 
 export default function App() {
   const calendarRef = useRef<FullCalendar | null>(null)
@@ -100,6 +101,9 @@ export default function App() {
     }
   }, [clients])
 
+  useEffect(() => {
+    import("@/assets/scss/calendar/calendar.css");
+  }, []);
 
   return (
     <div className="p-4">
@@ -155,7 +159,9 @@ export default function App() {
           datesSet={(arg) => setCurrentDate(arg.start)}
           resourceAreaWidth={300}
           firstDay={1}
-          
+          editable={true} 
+          droppable={true}
+          eventResizableFromStart={true}
           resourceAreaHeaderContent={() => (
             <SearchCarerDropdown
               open={open}
@@ -205,14 +211,26 @@ export default function App() {
               </div>
             )
           }}
-          events={[
-            {
-              title: "Booking",
-              start: "2026-01-19",
-              end: "2026-01-20",
-              resourceId: "a",
-            },
-          ]}
+          events={events}
+          eventMaxStack={2}
+          eventClassNames='bg-transparent! border-0! p-0!'
+          moreLinkClassNames="bg-transparent! px-2 [&>div]:p-0!"
+          moreLinkContent={(arg) => {
+            const { num } = arg
+            return <span className='text-blue-600 px-2 font-medium font-sm'>+{num} more shift</span>
+          }}
+          moreLinkClick={(info) => {
+            info.jsEvent.preventDefault();
+          
+          }}
+          eventContent={(el) => { 
+            const { event } = el
+            return (
+              <div className='p-2 bg-gray-50 border-l-2 border-green-600'>
+                <EventListItem event={event} onClick={(event) => console.log(event)} />
+              </div>
+            )
+          }}
           slotDuration={view === "resourceTimelineWeek" ? { days: 1 } : "00:15:00"}
           slotLabelClassNames={"[&>div]:justify-center!"}
           slotLabelFormat={
@@ -222,6 +240,7 @@ export default function App() {
           }
           slotMinTime="00:00:00"
           slotMaxTime="24:00:00"
+          dayPopoverFormat={{ month: 'short', day: 'numeric', year: 'numeric' }}
         />
       )}
 

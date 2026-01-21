@@ -1,0 +1,18 @@
+.fc-theme-standard .fc-popover {
+  width: 200px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.fc-theme-standard .fc-popover .fc-popover-header {
+  background-color: var(--color-blue-500);
+  color: #fff;
+  padding-block: 7px;
+  text-transform: uppercase;
+}
+.fc-theme-standard .fc-popover .fc-popover-header .fc-popover-close {
+  opacity: 1;
+}
+.fc-theme-standard .fc-popover .fc-popover-header .fc-popover-title {
+  font-size: 14px;
+  font-weight: 500;
+}/*# sourceMappingURL=calendar.css.map */
