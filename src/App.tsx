@@ -155,6 +155,7 @@ export default function App() {
           datesSet={(arg) => setCurrentDate(arg.start)}
           resourceAreaWidth={300}
           firstDay={1}
+          
           resourceAreaHeaderContent={() => (
             <SearchCarerDropdown
               open={open}
@@ -213,6 +214,7 @@ export default function App() {
             },
           ]}
           slotDuration={view === "resourceTimelineWeek" ? { days: 1 } : "00:15:00"}
+          slotLabelClassNames={"[&>div]:justify-center!"}
           slotLabelFormat={
             view === "resourceTimelineWeek"
               ? [{ weekday: "short", day: "numeric" }]
