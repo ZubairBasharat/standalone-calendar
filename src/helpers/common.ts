@@ -1,6 +1,16 @@
   /***********************
    * DATA (demo)
    ***********************/
+
+export type Client = {
+  id: string
+  title: string
+  initials: string
+  hours: number | null
+  colorClass: string
+}
+
+
 export const clients = [
   {
     id: "vacant",
@@ -72,7 +82,13 @@ export const clients = [
     hours: 8,
     colorClass: "cyan",
   },
-];
+] satisfies Array<{
+  id: string
+  title: string
+  colorClass: ColorKey
+  initials?: string
+  hours?: number | null
+}>;
 
 
 
@@ -83,7 +99,19 @@ export const carers = [
     { id: "k4", name: "Sarah Smith", initials: "SS", hours: 8 },
 ]
 
-export const colorMap = {
+export type ColorKey =
+  | "red"
+  | "green"
+  | "blue"
+  | "yellow"
+  | "purple"
+  | "orange"
+  | "teal"
+  | "pink"
+  | "cyan"
+  | "gray"
+
+export const colorMap: Record<ColorKey, string> = {
   red: "bg-red-600",
   green: "bg-green-600",
   blue: "bg-blue-600",
@@ -94,4 +122,10 @@ export const colorMap = {
   pink: "bg-pink-600",
   cyan: "bg-cyan-600",
   gray: "bg-gray-600",
+}
+
+export type ResourceExtendedProps = {
+  colorClass: ColorKey
+  initials?: string
+  hours?: number | null
 }
