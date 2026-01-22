@@ -13,6 +13,7 @@ interface CalendarHeaderProps {
   view: string
   calDate: Date,
   filters: CalendarFilters,
+  isExpandView: boolean,
   setCalDate: (d: Date) => void
   handlePrev: () => void
   handleToday: () => void
@@ -28,6 +29,7 @@ export default function CalendarHeader({
   view,
   calDate,
   filters,
+  isExpandView,
   setCalDate,
   handlePrev,
   handleToday,
@@ -136,7 +138,7 @@ export default function CalendarHeader({
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <div className="flex items-center space-x-2 py-3 px-2">
-                    <Switch id="expand-view" onCheckedChange={onExpandView} />
+                    <Switch id="expand-view" checked={isExpandView} onCheckedChange={onExpandView} />
                     <Label htmlFor="expand-view">Expand view</Label>
                 </div>
             </DropdownMenuContent>

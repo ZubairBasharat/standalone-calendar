@@ -143,19 +143,20 @@ export default function App() {
         title={formattedTitle}
         view={view}
         calDate={calDate}
+        isExpandView={expandView}
         setCalDate={setCalDate}
         handlePrev={handlePrev}
         handleToday={handleToday}
         handleNext={handleNext}
         handleViewChange={handleViewChange}
+        filters={filters}
+        onExpandView={setExpandView}
+        setFilters={setFilters}
         onGotoDate={(d) => {
           if (calendarRef.current) {
             calendarRef.current.getApi().gotoDate(d);
           }
         }}
-        onExpandView={setExpandView}
-        setFilters={setFilters}
-        filters={filters}
       />
       <div className="bg-white">
         {calendarReady && (
