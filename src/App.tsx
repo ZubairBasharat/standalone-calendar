@@ -132,8 +132,6 @@ export default function App() {
   })
 
   setFilteredEvents(data)
-
-  setCalendarReady(true)
 }, [events, filters.status, filters.shiftType])
 
 
