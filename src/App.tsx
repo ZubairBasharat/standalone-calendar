@@ -231,7 +231,7 @@ export default function App() {
               </div>
             )
           }}
-          slotDuration={view === "resourceTimelineWeek" ? { days: 1 } : "00:15:00"}
+          slotDuration={view === "resourceTimelineWeek" ? { days: 1 } : "00:05:00"}
           slotLabelClassNames={"[&>div]:justify-center!"}
           slotLabelFormat={
             view === "resourceTimelineWeek"
