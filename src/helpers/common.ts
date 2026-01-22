@@ -1,6 +1,3 @@
-  /***********************
-   * DATA (demo)
-   ***********************/
 export const clients = [
   {
     id: "vacant",
@@ -111,6 +108,7 @@ export const events = [
     endTime: "10:15:00",              // time of day the event ends
     resourceId: "c1",
     status: "pending",
+    shiftType: "nursing",
     carer: {
       name: "Makhdoom",
     }
@@ -119,9 +117,10 @@ export const events = [
     id: "2",
     title: "Booking 2",
     start: "2026-01-19",
-    end: "2026-01-20",
+    end: "2026-01-19",
     resourceId: "c1",
-    status: "pending",
+    status: "dropped",
+    shiftType: "companionship",
     carer: {
       name: "Makhdoom",
     }
@@ -130,9 +129,10 @@ export const events = [
     id: "3",
     title: "Booking 3",
     start: "2026-01-19",
-    end: "2026-01-20",
+    end: "2026-01-19",
     resourceId: "c1",
-    status: "pending",
+    status: "Vacant",
+    shiftType: "personal_care",
     carer: {
       name: "Makhdoom",
     }
@@ -140,10 +140,11 @@ export const events = [
   {
     id: "4",
     title: "Booking 4",
-    start: "2026-01-19",
-    end: "2026-01-20",
+    start: "2026-01-20",
+    end: "2026-01-2202",
     resourceId: "c1",
-    status: "pending",
+    status: "confirmed",
+    shiftType: "domestic_care",
     carer: {
       name: "Makhdoom",
     }
@@ -171,15 +172,30 @@ export type ColorKey =
   | "gray"
 
 export const statusColorMap: Record<string, string> = {
-  'all status': 'bg-slate-400',
+  'all': 'bg-slate-400',
   'job board': 'bg-purple-500',
   'pending': 'bg-red-500',
-  'cancelled': 'bg-orange-500',
-  'booked': 'bg-green-500',
-  'approved': 'bg-green-700',
-  'rejected': 'bg-red-600',
-  'invoiced': 'bg-sky-400',
+  'confirmed': 'bg-green-700',
+  'Vacant': 'bg-red-600',
+  'dropped': 'bg-slate-500',
 };
+
+export const statuses = [
+  { id: "all", name: "All Status" },
+  { id: "confirmed", name: "Confirmed" },
+  { id: "pending", name: "Pending" },
+  { id: "Vacant", name: "Vacant" },
+  { id: "job board", name: "Job Board" },
+  { id: "dropped", name: "Dropped" },
+]
+
+export const shiftTypes = [
+  { id: "all", name: "All Types" },
+  { id: "personal_care", name: "Personal Care" },
+  { id: "domestic_care", name: "Domestic Care" },
+  { id: "nursing", name: "Nursing" },
+  { id: "companionship", name: "Companionship" },
+]
 
 export const formatTime12Hours = (time: Date | null) => {
   return (time || new Date()).toLocaleTimeString(undefined, {
@@ -195,21 +211,46 @@ export type ResourceExtendedProps = {
   hours?: number | null
 }
 
-export type EventType = {
-  id: string,
+type BaseEvent = {
+  id: string
   title: string
-  start: string
-  end: string
   resourceId: string
   status: string
+  shiftType: string
   carer: {
     name: string
   }
 }
+
+
+export type EventType =
+  | (BaseEvent & {
+      start: string
+      end: string
+      startRecur?: never
+      endRecur?: never
+      daysOfWeek?: never
+      startTime?: never
+      endTime?: never
+    })
+  | (BaseEvent & {
+      startRecur: string
+      endRecur: string
+      daysOfWeek: number[]
+      startTime: string
+      endTime: string
+      start?: never
+      end?: never
+    })
 
 export type EventExtendedProps = {
   status: string
   carer: {
     name: string
   }
+}
+
+export interface CalendarFilters {
+  status: string
+  shiftType: string
 }

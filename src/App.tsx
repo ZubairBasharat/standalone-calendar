@@ -1,249 +1,182 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import FullCalendar from '@fullcalendar/react'
-import interactionPlugin from '@fullcalendar/interaction'
-import resourceTimelinePlugin from '@fullcalendar/resource-timeline'
-import { clients, colorMap, events, type Client, type ResourceExtendedProps } from '@/helpers/common'
-import SearchCarerDropdown from '@/components/SearchCareerDropdown'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Clock } from 'lucide-react'
-import { cn } from './lib/utils'
-import { DatePickerDropdown } from './components/DatePickerCalendar'
-import EventListItem from './components/calendar/EventListItem'
+import { useEffect, useMemo, useRef, useState } from "react";
+import FullCalendar from "@fullcalendar/react";
+import { clients, events, type CalendarFilters, type Client, type EventType } from "@/helpers/common";
+import CalendarScheduler from "@/components/calendar";
+import CalendarHeader from "@/components/calendar/CalendarHeader";
 
 export default function App() {
-  const calendarRef = useRef<FullCalendar | null>(null)
-  const [view, setCurrentView] = useState('resourceTimelineWeek')
-  const [currentDate, setCurrentDate] = useState(new Date())
-  const [selected, setSelected] = useState<Client[]>([])
-  const [filterSelection, setSelectedFilterSelection] = useState<Client[]>([])
-  const [open, setOpen] = useState(false)
+  const calendarRef = useRef<FullCalendar | null>(null);
+  const [view, setCurrentView] = useState("resourceTimelineWeek");
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selected, setSelected] = useState<Client[]>([]);
+  const [filterSelection, setSelectedFilterSelection] = useState<Client[]>([]);
+  const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [calendarReady, setCalendarReady] = useState(false)
-  const [calDate, setCalDate] = useState(new Date())
+  const [calendarReady, setCalendarReady] = useState(false);
+  const [calDate, setCalDate] = useState(new Date());
+  const [expandView, setExpandView] = useState(false);
+  const [filteredEvents, setFilteredEvents] = useState<EventType[]>([]);
+  const [filters, setFilters] = useState<CalendarFilters>({
+    status: "all",
+    shiftType: "all",
+  });
 
-  const handleViewChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleViewChange = (val: string) => {
     if (calendarRef.current) {
-      const calendarApi = calendarRef.current.getApi()
-      calendarApi.changeView(e.target.value)
-      setCurrentView(e.target.value)
-      setCurrentDate(calendarApi.getDate())
+      const calendarApi = calendarRef.current.getApi();
+      calendarApi.changeView(val);
+      setCurrentView(val);
+      setCurrentDate(calendarApi.getDate());
     }
-  }
+  };
 
   const handlePrev = () => {
     if (calendarRef.current) {
-      const calendarApi = calendarRef.current.getApi()
-      calendarApi.prev()
-      setCurrentDate(calendarApi.getDate())
+      const calendarApi = calendarRef.current.getApi();
+      calendarApi.prev();
+      setCurrentDate(calendarApi.getDate());
     }
-  }
+  };
 
   const handleNext = () => {
     if (calendarRef.current) {
-      const calendarApi = calendarRef.current.getApi()
-      calendarApi.next()
-      setCurrentDate(calendarApi.getDate())
+      const calendarApi = calendarRef.current.getApi();
+      calendarApi.next();
+      setCurrentDate(calendarApi.getDate());
     }
-  }
+  };
 
   const handleToday = () => {
     if (calendarRef.current) {
-      const calendarApi = calendarRef.current.getApi()
-      calendarApi.today()
-      setCurrentDate(calendarApi.getDate())
+      const calendarApi = calendarRef.current.getApi();
+      calendarApi.today();
+      setCurrentDate(calendarApi.getDate());
     }
-  }
+  };
 
-  const formattedTitle = new Intl.DateTimeFormat('en-US', {
-    month: 'long',
-    year: 'numeric'
-  }).format(currentDate)
+  const formattedTitle = useMemo(() => {
+    if(view === "resourceTimelineWeek") {
+      return new Intl.DateTimeFormat("en-US", {
+        month: "long",
+        year: "numeric",
+      }).format(currentDate)
+    }
+    else {
+      return new Intl.DateTimeFormat("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }).format(currentDate)
+    }
+  }, [currentDate, view]);
 
   const filterSearchedClients = useMemo(() => {
-    const q = search.trim().toLowerCase()
+    const q = search.trim().toLowerCase();
     return clients.filter((c) => {
       const matchesSearch =
         c.title.toLowerCase().includes(q) ||
-        c.initials.toLowerCase().includes(q)
+        c.initials.toLowerCase().includes(q);
 
-      return matchesSearch
-    })
-  }, [search, clients])
+      return matchesSearch;
+    });
+  }, [search, clients]);
 
   const filteredClients = useMemo(() => {
     const selectedIds = new Set(
-      filterSelection.map((s) => (typeof s === 'object' ? s.id : s))
-    )
+      filterSelection.map((s) => (typeof s === "object" ? s.id : s)),
+    );
 
     return clients.filter((c) => {
-      const selected = selectedIds.has(c.id)
+      const selected = selectedIds.has(c.id);
 
-      return selected
-    })
-  }, [clients, filterSelection])
+      return selected;
+    });
+  }, [clients, filterSelection]);
 
   function toggleValue(option: Client) {
-    const exists = selected.some(v => v.id === option.id)
+    const exists = selected.some((v) => v.id === option.id);
     const newValue = exists
-      ? selected.filter(v => v.id !== option.id)
-      : [...selected, option]
-    console.log(newValue)
-    setSelected(newValue)
+      ? selected.filter((v) => v.id !== option.id)
+      : [...selected, option];
+    setSelected(newValue);
   }
 
   useEffect(() => {
     if (clients.length > 0) {
-      setSelected(clients)
-      setSelectedFilterSelection(clients)
+      setSelected(clients);
+      setSelectedFilterSelection(clients);
       requestAnimationFrame(() => {
-        setCalendarReady(true)
-      })
+        setCalendarReady(true);
+      });
     }
-  }, [clients])
+  }, [clients]);
 
   useEffect(() => {
     import("@/assets/scss/calendar/calendar.css");
   }, []);
 
+ useEffect(() => {
+  const data = events.filter((e) => {
+    const status = filters.status
+    const shiftType = filters.shiftType
+
+    if (status === "all" && shiftType === "all") {
+      return true
+    } else if (status === "all") {
+      return e.shiftType === shiftType
+    } else if (shiftType === "all") {
+      return e.status === status
+    } else {
+      return e.status === status && e.shiftType === shiftType
+    }
+  })
+
+  setFilteredEvents(data)
+
+  setCalendarReady(true)
+}, [events, filters.status, filters.shiftType])
+
+
   return (
     <div className="p-4">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex gap-2">
-          <button
-            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-            onClick={handlePrev}
-          >
-            Prev
-          </button>
-          <button
-            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-            onClick={handleToday}
-          >
-            Today
-          </button>
-          <button
-            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-            onClick={handleNext}
-          >
-            Next
-          </button>
-        </div>
-        <div className="text-xl font-semibold">{formattedTitle}</div>
-
-        <div className='flex items-center gap-3'>
-          <DatePickerDropdown onChange={(d) => {
-            setCalDate(d)
-            if (calendarRef.current) {
-              const calendarApi = calendarRef.current.getApi()
-              calendarApi?.gotoDate(d)
-            }
-          }} date={calDate} />
-          <select
-            className="px-2 py-1 border rounded"
-            value={view}
-            onChange={handleViewChange}
-          >
-            <option value="resourceTimelineWeek">Week</option>
-            <option value="resourceTimelineDay">Day</option>
-          </select>
-        </div>
-      </div>
-      {calendarReady && (
-        <FullCalendar
-          ref={calendarRef}
-          plugins={[resourceTimelinePlugin, interactionPlugin]}
-          initialView={view}
-          schedulerLicenseKey="CC-Attribution-NonCommercial-NoDerivatives"
-          headerToolbar={false}
-          initialDate={currentDate}
-          datesSet={(arg) => setCurrentDate(arg.start)}
-          resourceAreaWidth={300}
-          firstDay={1}
-          editable={true} 
-          droppable={true}
-          eventResizableFromStart={true}
-          resourceAreaHeaderContent={() => (
-            <SearchCarerDropdown
-              open={open}
-              onClose={() => {
-                setOpen(false)
-                setSearch("")
-              }}
-              onConfirm={() => {
-                setSearch("")
-                setSelectedFilterSelection(selected)
-                setOpen(false)
-              }}
-              setSearch={setSearch}
-              setOpen={setOpen}
-              selected={selected}
-              onSelect={toggleValue}
-              users={filterSearchedClients}
-            />
-          )}
-          resources={filteredClients}
-          resourceLabelContent={(arg) => {
-            const { resource } = arg
-            const props = resource.extendedProps as ResourceExtendedProps
-            return (
-              <div className="flex gap-3 px-2">
-                <Avatar>
-                  <AvatarFallback
-                    className={cn(
-                      "text-white text-sm font-medium",
-                      colorMap[props.colorClass]
-                    )}
-                  >
-                    {resource.extendedProps.initials ?? "LR"}
-                  </AvatarFallback>
-                </Avatar>
-
-                <div>
-                  <div className="font-medium">{resource.title}</div>
-                  <div className="text-[12px] text-gray-400 flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {resource.extendedProps.hours ?? 0} hours
-                  </div>
-                  <div className="text-green-600 cursor-pointer text-[12px]">
-                    View availability
-                  </div>
-                </div>
-              </div>
-            )
-          }}
-          events={events}
-          eventMaxStack={2}
-          eventClassNames='bg-transparent! border-0! p-0!'
-          moreLinkClassNames="bg-transparent! px-2 [&>div]:p-0!"
-          moreLinkContent={(arg) => {
-            const { num } = arg
-            return <span className='text-blue-600 px-2 font-medium font-sm'>+{num} more shift</span>
-          }}
-          moreLinkClick={(info) => {
-            info.jsEvent.preventDefault();
-          
-          }}
-          eventContent={(el) => { 
-            const { event } = el
-            return (
-              <div className='p-2 bg-gray-50 border-l-2 border-green-600'>
-                <EventListItem event={event} onClick={(event) => console.log(event)} />
-              </div>
-            )
-          }}
-          slotDuration={view === "resourceTimelineWeek" ? { days: 1 } : "00:05:00"}
-          slotLabelClassNames={"[&>div]:justify-center!"}
-          slotLabelFormat={
-            view === "resourceTimelineWeek"
-              ? [{ weekday: "short", day: "numeric" }]
-              : [{ hour: "numeric", minute: "2-digit", hour12: true }]
+      <CalendarHeader
+        title={formattedTitle}
+        view={view}
+        calDate={calDate}
+        setCalDate={setCalDate}
+        handlePrev={handlePrev}
+        handleToday={handleToday}
+        handleNext={handleNext}
+        handleViewChange={handleViewChange}
+        onGotoDate={(d) => {
+          if (calendarRef.current) {
+            calendarRef.current.getApi().gotoDate(d);
           }
-          slotMinTime="00:00:00"
-          slotMaxTime="24:00:00"
-          dayPopoverFormat={{ month: 'short', day: 'numeric', year: 'numeric' }}
-        />
-      )}
-
+        }}
+        onExpandView={setExpandView}
+        setFilters={setFilters}
+        filters={filters}
+      />
+      <div className="bg-white">
+        {calendarReady && (
+          <CalendarScheduler
+            calendarRef={calendarRef}
+            view={view}
+            currentDate={currentDate}
+            setCurrentDate={setCurrentDate}
+            filteredClients={filteredClients}
+            events={filteredEvents}
+            open={open}
+            setOpen={setOpen}
+            setSearch={setSearch}
+            selected={selected}
+            toggleValue={toggleValue}
+            filterSearchedClients={filterSearchedClients}
+            setSelectedFilterSelection={setSelectedFilterSelection}
+            expandView={expandView}
+          />
+        )}
+      </div>
     </div>
-  )
+  );
 }
