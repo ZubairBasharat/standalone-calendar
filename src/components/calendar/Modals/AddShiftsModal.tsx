@@ -6,13 +6,31 @@ import {
 } from "@/components/common/ButtonColors";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface AddShiftsModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
 }
 
-export default function AddShiftsModal({ open }: AddShiftsModalProps) {
+export default function AddShiftsModal({ open, setOpen }: AddShiftsModalProps) {
+  const carers = [
+    { id: "1", name: "Talal" },
+    { id: "2", name: "Iqra" },
+    { id: "3", name: "Makhdoom" },
+  ];
+
+  const close = () => {
+    setOpen(false);
+  };
+
   return (
     <SheetModal
       open={open}
@@ -37,6 +55,21 @@ export default function AddShiftsModal({ open }: AddShiftsModalProps) {
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="shift-careers">Careers</Label>
+
+            <Select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select carers..." />
+              </SelectTrigger>
+              <SelectContent className="w-full">
+                <SelectGroup>
+                  {carers.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       }
