@@ -26,7 +26,7 @@ export default function MultiStepModal({ open, setOpen }: MultiStepModalProps) {
 
   const close = () => {
     setOpen(false);
-    setStep(1); // reset step
+    setStep(1);
   };
 
   const progressWidth = `${(step / totalSteps) * 100}%`;

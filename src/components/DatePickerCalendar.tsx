@@ -1,42 +1,56 @@
-import { useState } from "react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { CalendarIcon } from "lucide-react"
-import { Button } from "./ui/button"
-import { Calendar } from "./ui/calendar"
+import { useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { CalendarIcon } from "lucide-react";
+import { Button } from "./ui/button";
+import { Calendar } from "./ui/calendar";
+import { Label } from "./ui/label";
 
 export function DatePickerDropdown({
-    onChange,
-    date,
-}:
-{
-    date: Date
-    onChange: (date: Date) => void
+  date,
+  onChange,
+  pastDisabled = false,
+  label,
+  error,
+}: {
+  date: Date | null;
+  onChange: (date: Date | null) => void;
+  pastDisabled?: boolean;
+  label?: string;
+  error?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild className="bg-white ring-0! outline-none! h-[40px] shadow-none! rounded-[4px] border cursor-pointer">
-        <Button variant="outline" className="justify-start gap-2">
-          <CalendarIcon className="h-4 w-4" />
-          {date && date.toDateString()}
-        </Button>
-      </DropdownMenuTrigger>
+    <div className="flex flex-col gap-2">
+      {label && <Label htmlFor="date-picker">{label}</Label>}
 
-      <DropdownMenuContent
-        align="end"
-        className="p-2 w-[255px]"
-      >
-        <Calendar
-          mode="single"
-          selected={date}
-          required
-          onSelect={(date) => {
-            onChange(date)
-            setOpen(false)
-          }}
-        />
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
+      <DropdownMenu open={open} onOpenChange={setOpen}>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            className={`justify-start gap-2 h-[40px] ${error && "border-destructive"}`}
+          >
+            <CalendarIcon className="h-4 w-4" />
+            {date ? date.toDateString() : "Select date"}
+          </Button>
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent align="end" className="p-2 w-[255px]">
+          <Calendar
+            mode="single"
+            selected={date ?? undefined}
+            onSelect={(d) => {
+              onChange(d ?? null);
+              setOpen(false);
+            }}
+            disabled={pastDisabled ? { before: new Date() } : undefined}
+          />
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
 }
