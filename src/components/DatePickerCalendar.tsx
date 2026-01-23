@@ -32,14 +32,14 @@ export function DatePickerDropdown({
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
-            className={`justify-start gap-2 h-[40px] ${error && "border-destructive"}`}
+            className={`justify-start gap-2 h-10 ${error && "border-destructive"}`}
           >
             <CalendarIcon className="h-4 w-4" />
             {date ? date.toDateString() : "Select date"}
           </Button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="end" className="p-2 w-[255px]">
+        <DropdownMenuContent align="end" className="p-2 w-63.75">
           <Calendar
             mode="single"
             selected={date ?? undefined}
@@ -48,6 +48,7 @@ export function DatePickerDropdown({
               setOpen(false);
             }}
             disabled={pastDisabled ? { before: new Date() } : undefined}
+            captionLayout="dropdown"
           />
         </DropdownMenuContent>
       </DropdownMenu>

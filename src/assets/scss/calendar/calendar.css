@@ -15,4 +15,8 @@
 .fc-theme-standard .fc-popover .fc-popover-header .fc-popover-title {
   font-size: 14px;
   font-weight: 500;
+}
+.fc-theme-standard .fc-popover .fc-popover-body {
+  width: 100%;
+  min-width: initial;
 }/*# sourceMappingURL=calendar.css.map */

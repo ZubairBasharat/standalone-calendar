@@ -1,12 +1,17 @@
+import type { ResourceLabelContentArg } from "@fullcalendar/resource"
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Clock } from 'lucide-react'
+import { Calendar, ClipboardClock, Clock, EllipsisVertical } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { colorMap, type ResourceExtendedProps } from '@/helpers/common'
+import { DropdownMenu, DropdownMenuGroup, DropdownMenuItem } from '../ui/dropdown-menu'
+import { DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Button } from '../ui/button'
+import { useNavigate } from 'react-router'
 
-export default function ResourceLabel(arg: any) {
+export default function ResourceLabel(arg: ResourceLabelContentArg) {
+  const navigate = useNavigate()
   const { resource } = arg
   const props = resource.extendedProps as ResourceExtendedProps
-
   return (
     <div className="flex gap-3 px-2">
       <Avatar>
@@ -29,6 +34,31 @@ export default function ResourceLabel(arg: any) {
         <div className="text-green-600 cursor-pointer text-[12px]">
           View availability
         </div>
+      </div>
+      <div className="ms-auto">
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+            <Button className="w-[8px] ring-0! justify-center shadown-none bg-transparent hover:bg-transparent cursor-pointer text-foreground p-0! h-auto!">
+                <EllipsisVertical className='w-4! h-4! text-gray-400' />
+            </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="bg-white border min-w-40">
+                <DropdownMenuGroup>
+                    <DropdownMenuItem className='cursor-pointer'>
+                        <div className="flex items-center gap-2">
+                            <ClipboardClock />
+                            <span>Timesheet</span>
+                        </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className='cursor-pointer'>
+                        <div className="flex items-center gap-2" onClick={() => navigate(`/staff/${resource.id}`)}>
+                            <Calendar />
+                            <span>Calendar</span>
+                        </div>
+                    </DropdownMenuItem>
+                </DropdownMenuGroup>
+            </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   )
