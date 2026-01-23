@@ -154,8 +154,10 @@ export default function CalendarHeader({
                     </Select>
                     <DatePickerDropdown
                         onChange={(d) => {
-                            setCalDate(d);
-                            onGotoDate(d);
+                            if(d) {
+                                setCalDate(d);
+                                onGotoDate(d);
+                            }
                         }}
                         date={calDate}
                     />
