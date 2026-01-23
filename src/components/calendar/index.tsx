@@ -1,48 +1,39 @@
 import FullCalendar from '@fullcalendar/react'
-import interactionPlugin from '@fullcalendar/interaction'
-import resourceTimelinePlugin from '@fullcalendar/resource-timeline'
-import SearchCarerDropdown from '@/components/SearchCareerDropdown'
+import type { PluginDef } from '@fullcalendar/core'
 import EventListItem from '@/components/calendar/EventListItem'
-import ResourceLabel from './ResourceLabel'
+import type React from 'react'
+import type { ResourceLabelContentArg } from "@fullcalendar/resource"
 
 interface ReusableCalendarProps {
   calendarRef: any
   view: string
   currentDate: Date
-  setCurrentDate: (d: Date) => void
-  filteredClients: any[]
+  resources?: any[]
   events: any[]
-  open: boolean
-  setOpen: (v: boolean) => void
-  setSearch: (v: string) => void
-  selected: any[]
-  toggleValue: (v: any) => void
-  filterSearchedClients: any[]
-  setSelectedFilterSelection: (v: any[]) => void,
-  expandView: boolean
+  expandView: boolean,
+  plugins: PluginDef[]
+  setCurrentDate: (d: Date) => void
+  resourceAreaHeaderContent?: () => React.JSX.Element,
+  resourceLabelContent?: (arg: ResourceLabelContentArg) => React.JSX.Element
 }
 
 export default function CalendarScheduler({
   calendarRef,
   view,
   currentDate,
+  resources,
+  events = [],
+  expandView,
+  plugins,
   setCurrentDate,
-  filteredClients,
-  events,
-  open,
-  setOpen,
-  setSearch,
-  selected,
-  toggleValue,
-  filterSearchedClients,
-  setSelectedFilterSelection,
-  expandView
+  resourceAreaHeaderContent,
+  resourceLabelContent
 }: ReusableCalendarProps) {
   return (
     <FullCalendar
       key={expandView ? "stack-on" : "stack-off"}
       ref={calendarRef}
-      plugins={[resourceTimelinePlugin, interactionPlugin]}
+      plugins={plugins}
       initialView={view}
       schedulerLicenseKey="CC-Attribution-NonCommercial-NoDerivatives"
       headerToolbar={false}
@@ -53,32 +44,15 @@ export default function CalendarScheduler({
       editable={true}
       droppable={true}
       eventResizableFromStart={true}
-      resourceAreaHeaderContent={() => (
-        <SearchCarerDropdown
-          open={open}
-          onClose={() => {
-            setOpen(false)
-            setSearch("")
-          }}
-          onConfirm={() => {
-            setSearch("")
-            setSelectedFilterSelection(selected)
-            setOpen(false)
-          }}
-          setSearch={setSearch}
-          setOpen={setOpen}
-          selected={selected}
-          onSelect={toggleValue}
-          users={filterSearchedClients}
-        />
-      )}
-      resources={filteredClients}
-      resourceLabelContent={(arg) => <ResourceLabel {...arg} />}
+      resources={resources}
+      resourceAreaHeaderContent={resourceAreaHeaderContent}
+      resourceLabelContent={resourceLabelContent}
       events={events}
       eventMaxStack={expandView ? undefined : 2}
       eventClassNames="bg-transparent! border-0! p-0!"
       moreLinkClassNames="bg-transparent! px-2 [&>div]:p-0!"
       eventOrder={"title"}
+      height="calc(100vh - 90px)"
       moreLinkContent={(arg) => {
         const { num } = arg
         return (
@@ -93,7 +67,7 @@ export default function CalendarScheduler({
       eventContent={(el) => {
         const { event } = el
         return (
-          <div className="p-2 bg-gray-50 border-l-2 border-green-600">
+          <div className="p-2 bg-gray-50 border-l-2 border-green-600 w-full">
             <EventListItem event={event} onClick={(event) => console.log(event)} />
           </div>
         )

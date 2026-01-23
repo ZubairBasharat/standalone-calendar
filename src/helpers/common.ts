@@ -151,6 +151,18 @@ export const events = [
   },
 ]
 
+export const calendarViewOptions = {
+  resource: [
+    { id: "resourceTimelineWeek", name: "Weekly" },
+    { id: "resourceTimelineDay", name: "Daily" }
+  ],
+  timeGrid: [
+    { id: "timeGridDay", name: "Daily" },
+    { id: "timeGridWeek", name: "Weekly" },
+    { id: "dayGridMonth", name: "Monthly" }
+  ]
+}
+
 export type Client = {
   id: string
   title: string
@@ -253,4 +265,8 @@ export type EventExtendedProps = {
 export interface CalendarFilters {
   status: string
   shiftType: string
+}
+export interface SelectOptions {
+  id: string
+  name: string
 }

@@ -5,14 +5,13 @@ import { Button } from "./ui/button"
 import { Calendar } from "./ui/calendar"
 
 export function DatePickerDropdown({
-    onChange,
-    date,
-}:
-{
-    date: Date
-    onChange: (date: Date) => void
+  onChange,
+  date,
+}: {
+  date: Date
+  onChange: (date: Date) => void
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -30,11 +29,13 @@ export function DatePickerDropdown({
         <Calendar
           mode="single"
           selected={date}
+          defaultMonth={date}
           required
-          onSelect={(date) => {
-            onChange(date)
+          onSelect={(selectedDate) => {
+            onChange(selectedDate)
             setOpen(false)
           }}
+          captionLayout="dropdown"
         />
       </DropdownMenuContent>
     </DropdownMenu>
