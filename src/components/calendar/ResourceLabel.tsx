@@ -2,7 +2,7 @@ import type { ResourceLabelContentArg } from "@fullcalendar/resource"
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Calendar, ClipboardClock, Clock, EllipsisVertical } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { bgColors, colorMap, getInitials, type ResourceExtendedProps } from '@/helpers/common'
+import { bgColors, getInitials } from '@/helpers/common'
 import { DropdownMenu, DropdownMenuGroup, DropdownMenuItem } from '../ui/dropdown-menu'
 import { DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Button } from '../ui/button'
