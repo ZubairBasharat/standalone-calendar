@@ -1,8 +1,8 @@
 import type { ResourceLabelContentArg } from "@fullcalendar/resource"
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Calendar, ClipboardClock, Clock, EllipsisVertical } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { colorMap, type ResourceExtendedProps } from '@/helpers/common'
+import { bgColors, colorMap, getInitials, type ResourceExtendedProps } from '@/helpers/common'
 import { DropdownMenu, DropdownMenuGroup, DropdownMenuItem } from '../ui/dropdown-menu'
 import { DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Button } from '../ui/button'
@@ -11,17 +11,18 @@ import { useNavigate } from 'react-router'
 export default function ResourceLabel(arg: ResourceLabelContentArg) {
   const navigate = useNavigate()
   const { resource } = arg
-  const props = resource.extendedProps as ResourceExtendedProps
+//   const props = resource.extendedProps as ResourceExtendedProps
   return (
     <div className="flex gap-3 px-2">
       <Avatar>
+        <AvatarImage src={`https://randomuser.me/api/portraits/men/${resource.id}.jpg`} />
         <AvatarFallback
           className={cn(
             "text-white text-sm font-medium",
-            colorMap[props.colorClass]
+            bgColors[Math.floor(Math.random() * bgColors.length)]
           )}
         >
-          {resource.extendedProps.initials ?? "LR"}
+          {getInitials(resource.title)}
         </AvatarFallback>
       </Avatar>
 

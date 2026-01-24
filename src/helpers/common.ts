@@ -142,6 +142,25 @@ export const formatTime12Hours = (time: Date | null) => {
   })
 }
 
+export const bgColors = [
+  "bg-red-500",
+  "bg-blue-500",
+  "bg-green-500",
+  "bg-yellow-500",
+  "bg-purple-500",
+  "bg-pink-500",
+  "bg-indigo-500",
+  "bg-teal-500",
+  "bg-orange-500",
+  "bg-gray-500",
+];
+
+export function getInitials(name: string) {
+  const parts = name.trim().split(" ");
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
 
 export const mapSchedulerToEvent = (
   scheduler: AssignedScheduler
@@ -157,7 +176,7 @@ export const mapSchedulerToEvent = (
     },
   };
 
-  // ✅ Recurring event
+  // Recurring event
   if (scheduler.is_recurring === "1") {
     const daysOfWeek: number[] = [0, 1, 2, 3, 4, 5, 6];
 
@@ -171,7 +190,7 @@ export const mapSchedulerToEvent = (
     };
   }
 
-  // ✅ Single event
+  // Single event
   return {
     ...base,
     start: `${scheduler.start_date}T${scheduler.start_time}`,
