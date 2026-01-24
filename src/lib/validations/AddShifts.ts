@@ -2,85 +2,77 @@ import * as z from "zod";
 
 export const addShiftSchema = z
   .object({
-    client_name: z.string().min(1, "* Please Enter a Client Name"),
-    carers: z.string().min(1, "* Please Select a carer"),
-    founder_code: z.string().min(1, "* Please Select a Founder Code"),
-    call_slot: z.string().min(1, "* Please Select a Call Slot"),
-    visit_type: z.string().min(1, "* Please Select a Visit Type"),
+    title: z.string().min(1, "* Please Enter a Title"),
+    client_id: z.string().min(1, "* Please Enter a Client Name"),
+    carers: z.array(z.string()).min(1, "* Please Select a carer"),
+    founder_code: z.string().optional(),
+    call_slot: z.string().optional(),
+    visit_type: z.string().optional(),
 
-    startDate: z.date().nullable(),
-    endDate: z.date().nullable(),
+    start_date: z.date().nullable(),
+    end_date: z.date().nullable(),
 
-    startTime: z.string().min(1, "* Please select start time"),
-    endTime: z.string().min(1, "* Please select end time"),
+    start_time: z.string().min(1, "* Please select start time"),
+    end_time: z.string().min(1, "* Please select end time"),
 
-    recurring: z.boolean(),
-    weekdays: z.array(z.string()).optional(), // Recurring only
+    is_recurring: z.boolean(),
+    recurring_days: z.array(z.string()).optional(),
   })
   .superRefine((data, ctx) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Required start date
-    if (!data.startDate) {
+    // 1️⃣ Start date required
+    if (!data.start_date) {
       ctx.addIssue({
-        path: ["startDate"],
+        path: ["start_date"],
         message: "* Please select a start date",
         code: z.ZodIssueCode.custom,
       });
+      return;
     }
 
-    // Required end date
-    if (!data.endDate) {
+    // 2️⃣ End date required only if NOT recurring
+    if (!data.is_recurring && !data.end_date) {
       ctx.addIssue({
-        path: ["endDate"],
+        path: ["end_date"],
         message: "* Please select an end date",
         code: z.ZodIssueCode.custom,
       });
+      return;
     }
 
-    // Stop further checks if either is missing
-    if (!data.startDate || !data.endDate) return;
-
-    // Start date in the past
-    if (data.startDate < today) {
+    // 3️⃣ Start date cannot be in past
+    if (data.start_date < today) {
       ctx.addIssue({
-        path: ["startDate"],
+        path: ["start_date"],
         message: "* Start date cannot be in the past",
         code: z.ZodIssueCode.custom,
       });
     }
 
-    // End date before start date
-    if (data.endDate < data.startDate) {
+    // 4️⃣ If end_date exists (recurring or not), compare
+    if (data.end_date && data.end_date < data.start_date) {
       ctx.addIssue({
-        path: ["endDate"],
+        path: ["end_date"],
         message: "* End date must be after start date",
         code: z.ZodIssueCode.custom,
       });
     }
 
-    // Recurring but no weekdays selected
-    if (data.recurring && (!data.weekdays || data.weekdays.length === 0)) {
+    // 5️⃣ Time validation
+    if (data.start_time && data.end_time && data.end_time <= data.start_time) {
       ctx.addIssue({
-        path: ["weekdays"],
-        message: "* Please select at least one weekday",
-        code: z.ZodIssueCode.custom,
-      });
-    }
-
-    // End time before start time
-    if (data.startTime && data.endTime && data.endTime <= data.startTime) {
-      ctx.addIssue({
-        path: ["endTime"],
+        path: ["end_time"],
         message: "* End time must be after start time",
         code: z.ZodIssueCode.custom,
       });
     }
 
-    if (data.recurring && (!data.weekdays || data.weekdays.length === 0)) {
+    // 6️⃣ Recurring weekdays
+    if (data.is_recurring && (!data.recurring_days || data.recurring_days.length === 0)) {
       ctx.addIssue({
-        path: ["weekdays"],
+        path: ["recurring_days"],
         message: "* Please select at least one weekday",
         code: z.ZodIssueCode.custom,
       });

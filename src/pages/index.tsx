@@ -1,201 +1,212 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import FullCalendar from "@fullcalendar/react";
-import interactionPlugin from '@fullcalendar/interaction'
-import resourceTimelinePlugin from '@fullcalendar/resource-timeline'
-import { calendarViewOptions, clients, events, type CalendarFilters, type Client, type EventType } from "@/helpers/common";
+import interactionPlugin from "@fullcalendar/interaction";
+import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
+import dayjs from "dayjs";
+
 import CalendarScheduler from "@/components/calendar";
 import CalendarHeader from "@/components/calendar/CalendarHeader";
 import SearchCarerDropdown from "@/components/SearchCareerDropdown";
 import ResourceLabel from "@/components/calendar/ResourceLabel";
 
+import { calendarViewOptions, type CalendarFilters, type Client, type EventType } from "@/helpers/common";
+import { useAllUsersQuery } from "@/features/api/users";
+import { useGetAllEventsQuery } from "@/features/api/calendar/events";
+import FullScreenLoader from "@/components/common/FullScreenLoader";
+
 export default function CalendarDashboard() {
-    const calendarRef = useRef<FullCalendar | null>(null);
-    const [view, setCurrentView] = useState(calendarViewOptions.resource[0].id);
-    const [currentDate, setCurrentDate] = useState(new Date());
-    const [selected, setSelected] = useState<Client[]>([]);
-    const [filterSelection, setSelectedFilterSelection] = useState<Client[]>([]);
-    const [open, setOpen] = useState(false);
-    const [search, setSearch] = useState("");
-    const [calendarReady, setCalendarReady] = useState(false);
-    const [calDate, setCalDate] = useState(new Date());
-    const [expandView, setExpandView] = useState(false);
-    const [filteredEvents, setFilteredEvents] = useState<EventType[]>([]);
-    const [filters, setFilters] = useState<CalendarFilters>({
-        status: "all",
-        shiftType: "all",
-    });
+  const calendarRef = useRef<FullCalendar | null>(null);
 
-    const handleViewChange = (val: string) => {
-        if (calendarRef.current) {
-            const calendarApi = calendarRef.current.getApi();
-            calendarApi.changeView(val);
-            setCurrentView(val);
-            setCurrentDate(calendarApi.getDate());
-        }
-    };
+  // --------------------------
+  // State
+  // --------------------------
+  const [view, setCurrentView] = useState(calendarViewOptions.resource[0].id);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+  const [calendarReady, setCalendarReady] = useState(false);
+  const [expandView, setExpandView] = useState(false);
+  const [filters, setFilters] = useState<CalendarFilters>({
+    status: "all",
+    shiftType: "all",
+  });
 
-    const handlePrev = () => {
-        if (calendarRef.current) {
-            const calendarApi = calendarRef.current.getApi();
-            calendarApi.prev();
-            setCurrentDate(calendarApi.getDate());
-        }
-    };
-
-    const handleNext = () => {
-        if (calendarRef.current) {
-            const calendarApi = calendarRef.current.getApi();
-            calendarApi.next();
-            setCurrentDate(calendarApi.getDate());
-        }
-    };
-
-    const handleToday = () => {
-        if (calendarRef.current) {
-            const calendarApi = calendarRef.current.getApi();
-            calendarApi.today();
-            setCurrentDate(calendarApi.getDate());
-        }
-    };
-
-    const formattedTitle = useMemo(() => {
-        if (view === "resourceTimelineWeek") {
-            return new Intl.DateTimeFormat("en-US", {
-                month: "long",
-                year: "numeric",
-            }).format(currentDate)
-        }
-        else {
-            return new Intl.DateTimeFormat("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-            }).format(currentDate)
-        }
-    }, [currentDate, view]);
-
-    const filterSearchedClients = useMemo(() => {
-        const q = search.trim().toLowerCase();
-        return clients.filter((c) => {
-            const matchesSearch =
-                c.title.toLowerCase().includes(q) ||
-                c.initials.toLowerCase().includes(q);
-
-            return matchesSearch;
-        });
-    }, [search, clients]);
-
-    const filteredClients = useMemo(() => {
-        const selectedIds = new Set(
-            filterSelection.map((s) => (typeof s === "object" ? s.id : s)),
-        );
-
-        return clients.filter((c) => {
-            const selected = selectedIds.has(c.id);
-
-            return selected;
-        });
-    }, [clients, filterSelection]);
-
-    function toggleValue(option: Client) {
-        const exists = selected.some((v) => v.id === option.id);
-        const newValue = exists
-            ? selected.filter((v) => v.id !== option.id)
-            : [...selected, option];
-        setSelected(newValue);
+  // --------------------------
+  // Queries
+  // --------------------------
+  const { data: clients = [] } = useAllUsersQuery();
+  const reqDate = useMemo(() => {
+    if (view === "resourceTimelineWeek") {
+      return {
+        start: dayjs(currentDate).format("YYYY-MM-DD"),
+        end: dayjs(currentDate).add(6, "day").format("YYYY-MM-DD"),
+      };
     }
+    return {
+      start: dayjs(currentDate).format("YYYY-MM-DD"),
+      end: dayjs(currentDate).format("YYYY-MM-DD"),
+    };
+  }, [currentDate]);
 
-    useEffect(() => {
-        if (clients.length > 0) {
-            setSelected(clients);
-            setSelectedFilterSelection(clients);
-            requestAnimationFrame(() => {
-                setCalendarReady(true);
-            });
-        }
-    }, [clients]);
-
-    useEffect(() => {
-        import("@/assets/scss/calendar/calendar.css");
-    }, []);
-
-    useEffect(() => {
-        const data = events.filter((e) => {
-            const status = filters.status
-            const shiftType = filters.shiftType
-
-            if (status === "all" && shiftType === "all") {
-                return true
-            } else if (status === "all") {
-                return e.shiftType === shiftType
-            } else if (shiftType === "all") {
-                return e.status === status
-            } else {
-                return e.status === status && e.shiftType === shiftType
-            }
-        })
-
-        setFilteredEvents(data)
-    }, [events, filters.status, filters.shiftType])
+  const { data: events = [], isLoading: isLoadingEvents, isFetching: isFetchingEvents } = useGetAllEventsQuery({
+    startDate: reqDate.start,
+    endDate: reqDate.end,
+  },{
+    refetchOnMountOrArgChange: true,
+  });
 
 
-    return (
-        <div className="p-4">
-            <CalendarHeader
-                title={formattedTitle}
-                view={view}
-                viewOptions={calendarViewOptions.resource}
-                calDate={calDate}
-                isExpandView={expandView}
-                setCalDate={setCalDate}
-                handlePrev={handlePrev}
-                handleToday={handleToday}
-                handleNext={handleNext}
-                handleViewChange={handleViewChange}
-                filters={filters}
-                onExpandView={setExpandView}
-                setFilters={setFilters}
-                onGotoDate={(d) => {
-                    if (calendarRef.current) {
-                        calendarRef.current.getApi().gotoDate(d);
-                    }
-                }}
-            />
-            <div className="bg-white">
-                {calendarReady && (
-                    <CalendarScheduler
-                        plugins={[resourceTimelinePlugin, interactionPlugin]}
-                        calendarRef={calendarRef}
-                        view={view}
-                        currentDate={currentDate}
-                        setCurrentDate={setCurrentDate}
-                        resources={filteredClients}
-                        events={filteredEvents}
-                        expandView={expandView}
-                        resourceLabelContent={(arg) => <ResourceLabel {...arg} />}
-                        resourceAreaHeaderContent={() => (
-                            <SearchCarerDropdown
-                                open={open}
-                                onClose={() => {
-                                    setOpen(false)
-                                    setSearch("")
-                                }}
-                                onConfirm={() => {
-                                    setSearch("")
-                                    setSelectedFilterSelection(selected)
-                                    setOpen(false)
-                                }}
-                                setSearch={setSearch}
-                                setOpen={setOpen}
-                                selected={selected}
-                                onSelect={toggleValue}
-                                users={filterSearchedClients}
-                            />
-                        )}
-
-                    />
-                )}
-            </div>
-        </div>
+  // --------------------------
+  // Derived State
+  // --------------------------
+  const selectedClients = useMemo(() => clients, [clients]);
+  const filteredClients = useMemo(() => {
+    // Filter by search
+    const q = search.trim().toLowerCase();
+    let filtered = clients.filter(
+      (c) => c.title.toLowerCase().includes(q) || c.initials.toLowerCase().includes(q)
     );
+
+    // Filter by selection
+    // If no selection, return all
+    return filtered.length > 0 ? filtered : clients;
+  }, [clients, search]);
+
+  const filteredEvents = useMemo(() => {
+    return events.filter((e) => {
+      const status = filters.status;
+      const shiftType = filters.shiftType;
+
+      if (status === "all" && shiftType === "all") return true;
+      if (status === "all") return e.shiftType === shiftType;
+      if (shiftType === "all") return e.status === status;
+      return e.status === status && e.shiftType === shiftType;
+    });
+  }, [events, filters.status, filters.shiftType]);
+
+
+  // --------------------------
+  // Calendar Ready
+  // --------------------------
+  useEffect(() => {
+    if (clients.length > 0 && !calendarReady) {
+      requestAnimationFrame(() => setCalendarReady(true));
+    }
+  }, [clients, calendarReady]);
+
+  // --------------------------
+  // Load CSS
+  // --------------------------
+  useEffect(() => {
+    import("@/assets/scss/calendar/calendar.css");
+  }, []);
+
+  // --------------------------
+  // Calendar Handlers
+  // --------------------------
+  const handleViewChange = (val: string) => {
+    const calendarApi = calendarRef.current?.getApi();
+    if (!calendarApi) return;
+    calendarApi.changeView(val);
+    setCurrentView(val);
+    setCurrentDate(calendarApi.getDate());
+  };
+
+  const handlePrev = () => {
+    const calendarApi = calendarRef.current?.getApi();
+    if (!calendarApi) return;
+    calendarApi.prev();
+    setCurrentDate(calendarApi.getDate());
+  };
+
+  const handleNext = () => {
+    const calendarApi = calendarRef.current?.getApi();
+    if (!calendarApi) return;
+    calendarApi.next();
+    setCurrentDate(calendarApi.getDate());
+  };
+
+  const handleToday = () => {
+    const calendarApi = calendarRef.current?.getApi();
+    if (!calendarApi) return;
+    calendarApi.today();
+    setCurrentDate(calendarApi.getDate());
+  };
+
+  const toggleClientSelection = (option: Client) => {
+    // You can implement selection logic if needed
+    // Currently using search & selectedClients
+  };
+
+  const formattedTitle = useMemo(() => {
+    if (view === "resourceTimelineWeek") {
+      return new Intl.DateTimeFormat("en-US", {
+        month: "long",
+        year: "numeric",
+      }).format(currentDate);
+    }
+    return new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }).format(currentDate);
+  }, [currentDate, view]);
+
+  return (
+    <>
+    <div className="p-4">
+      <CalendarHeader
+        title={formattedTitle}
+        view={view}
+        viewOptions={calendarViewOptions.resource}
+        calDate={currentDate}
+        isExpandView={expandView}
+        setCalDate={setCurrentDate}
+        handlePrev={handlePrev}
+        handleToday={handleToday}
+        handleNext={handleNext}
+        handleViewChange={handleViewChange}
+        filters={filters}
+        onExpandView={setExpandView}
+        setFilters={setFilters}
+        onGotoDate={(d) => calendarRef.current?.getApi().gotoDate(d)}
+      />
+
+      <div className="bg-white">
+        {calendarReady && (
+          <CalendarScheduler
+            plugins={[resourceTimelinePlugin, interactionPlugin]}
+            calendarRef={calendarRef}
+            view={view}
+            currentDate={currentDate}
+            setCurrentDate={setCurrentDate}
+            resources={filteredClients}
+            events={events}
+            expandView={expandView}
+            resourceLabelContent={(arg) => <ResourceLabel {...arg} />}
+            resourceAreaHeaderContent={() => (
+              <SearchCarerDropdown
+                open={open}
+                onClose={() => {
+                  setOpen(false);
+                  setSearch("");
+                }}
+                onConfirm={() => {
+                  setSearch("");
+                  setOpen(false);
+                }}
+                setSearch={setSearch}
+                setOpen={setOpen}
+                selected={selectedClients}
+                onSelect={toggleClientSelection}
+                users={filteredClients}
+              />
+            )}
+          />
+        )}
+      </div>
+    </div>
+    {(isFetchingEvents || isLoadingEvents) && <FullScreenLoader />}
+    </>
+  )
 }

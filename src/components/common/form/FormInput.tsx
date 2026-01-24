@@ -9,6 +9,7 @@ interface FormInputProps {
   type?: React.InputHTMLAttributes<HTMLInputElement>["type"];
   placeholder?: string;
   className?: string;
+  readOnly?: boolean;
 }
 
 export function FormInput({
@@ -17,6 +18,7 @@ export function FormInput({
   type = "text",
   placeholder,
   className,
+  readOnly
 }: FormInputProps) {
   const {
     register,
@@ -36,6 +38,7 @@ export function FormInput({
         aria-invalid={!!error}
         className={cn(error && "border-destructive", className)}
         {...register(name)}
+        readOnly={readOnly}
       />
 
       {error && <p className="text-xs text-destructive">{error}</p>}

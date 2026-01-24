@@ -1,81 +1,4 @@
-export const clients = [
-  {
-    id: "vacant",
-    title: "Vacant Shift",
-    initials: "VS",
-    hours: null,
-    colorClass: "gray",
-  },
-  {
-    id: "c1",
-    title: "Alice Johnson",
-    initials: "AJ",
-    hours: 8,
-    colorClass: "red",
-  },
-  {
-    id: "c2",
-    title: "Brian Smith",
-    initials: "BS",
-    hours: 8,
-    colorClass: "green",
-  },
-  {
-    id: "c3",
-    title: "Charlotte Lee",
-    initials: "CL",
-    hours: 6,
-    colorClass: "blue",
-  },
-  {
-    id: "c4",
-    title: "Daniel Kim",
-    initials: "DK",
-    hours: 7,
-    colorClass: "yellow",
-  },
-  {
-    id: "c5",
-    title: "Eva Martinez",
-    initials: "EM",
-    hours: 8,
-    colorClass: "purple",
-  },
-  {
-    id: "c6",
-    title: "Franklin Moore",
-    initials: "FM",
-    hours: 5,
-    colorClass: "orange",
-  },
-  {
-    id: "c7",
-    title: "Grace Wilson",
-    initials: "GW",
-    hours: 8,
-    colorClass: "teal",
-  },
-  {
-    id: "c8",
-    title: "Henry Brown",
-    initials: "HB",
-    hours: 8,
-    colorClass: "pink",
-  },
-  {
-    id: "c9",
-    title: "Isabella Davis",
-    initials: "ID",
-    hours: 8,
-    colorClass: "cyan",
-  },
-] satisfies Array<{
-  id: string
-  title: string
-  colorClass: ColorKey
-  initials?: string
-  hours?: number | null
-}>;
+import type { AssignedScheduler, CarerResponse } from '@/features/api/types';
 
 export const carers = [
     { id: "k1", name: "Makhdoom", initials: "MK", hours: 8 },
@@ -163,12 +86,14 @@ export const calendarViewOptions = {
   ]
 }
 
+
 export type Client = {
   id: string
   title: string
   initials: string
   hours: number | null
-  colorClass: string
+  colorClass: string;
+  type: string;
 }
 
 export type ColorKey =
@@ -217,6 +142,44 @@ export const formatTime12Hours = (time: Date | null) => {
   })
 }
 
+
+export const mapSchedulerToEvent = (
+  scheduler: AssignedScheduler
+): EventType => {
+  const base = {
+    id: scheduler.id+'_sh_'+Math.random().toString(36).substring(7),
+    title: scheduler.title,
+    resourceId: scheduler.pivot.carer_id,
+    status: "confirmed",
+    shiftType: "personal_care",
+    carer: {
+      name: 'Career',
+    },
+  };
+
+  // ✅ Recurring event
+  if (scheduler.is_recurring === "1") {
+    const daysOfWeek: number[] = [0, 1, 2, 3, 4, 5, 6];
+
+    return {
+      ...base,
+      startRecur: scheduler.start_date,
+      // endRecur: scheduler.end_date,
+      daysOfWeek,
+      startTime: scheduler.start_time,
+      endTime: scheduler.end_time,
+    };
+  }
+
+  // ✅ Single event
+  return {
+    ...base,
+    start: `${scheduler.start_date}T${scheduler.start_time}`,
+    end: `${scheduler.end_date}T${scheduler.end_time}`,
+  };
+};
+
+
 export type ResourceExtendedProps = {
   colorClass: ColorKey
   initials?: string
@@ -247,7 +210,7 @@ export type EventType =
     })
   | (BaseEvent & {
       startRecur: string
-      endRecur: string
+      endRecur?: string
       daysOfWeek: number[]
       startTime: string
       endTime: string

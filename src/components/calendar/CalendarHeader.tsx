@@ -14,6 +14,7 @@ import {
     statusColorMap,
     statuses,
     type CalendarFilters,
+    type Client,
     type SelectOptions,
 } from "@/helpers/common";
 import {
@@ -21,6 +22,7 @@ import {
     ChevronRight,
     EllipsisVertical,
     Grid3X3,
+    User2,
 } from "lucide-react";
 import { DropdownMenu } from "../ui/dropdown-menu";
 import {
@@ -33,7 +35,6 @@ import {
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
 // import MultiStepModal from "./Modals/MultiStepsModal";
-import AddShiftsModal from "./Modals/AddShiftsModal";
 
 interface CalendarHeaderProps {
     title: string;
@@ -43,6 +44,7 @@ interface CalendarHeaderProps {
     isExpandView: boolean;
     viewOptions: SelectOptions[];
     addShift?: boolean;
+    user?: Client | null;
     setCalDate: (d: Date) => void;
     handlePrev: () => void;
     handleToday: () => void;
@@ -51,6 +53,7 @@ interface CalendarHeaderProps {
     onGotoDate: (d: Date) => void;
     onExpandView: (value: boolean) => void;
     setFilters?: (value: CalendarFilters) => void;
+    onAddClick?: () => void;
 }
 
 export default function CalendarHeader({
@@ -61,6 +64,7 @@ export default function CalendarHeader({
     isExpandView,
     viewOptions,
     addShift = false,
+    user,
     setCalDate,
     handlePrev,
     handleToday,
@@ -69,10 +73,10 @@ export default function CalendarHeader({
     onGotoDate,
     onExpandView,
     setFilters,
+    onAddClick
 }: CalendarHeaderProps) {
     const BTN_CLASSES =
         "px-4 py-2 h-[40px] bg-white border text-foreground rounded-[4px] hover:bg-blue-600 hover:text-white cursor-pointer";
-    const [openStepsSheet, setOpenStepsSheet] = useState(false);
     return (
         <>
             <div className="flex items-center justify-between mb-4 z-10 relative">
@@ -138,7 +142,14 @@ export default function CalendarHeader({
                         <ChevronRight className="w-5! h-5!" />
                     </Button>
                 </div>
-
+                {user &&
+                    (
+                        <div className="text-xl font-semibold flex items-center gap-2">
+                            <User2 className="w-5 h-5" />
+                            <span className="text-blue-500">{user.title}</span>
+                        </div>
+                    )
+                }
                 <div className="flex items-center gap-3">
                     <Select value={view} onValueChange={(val) => handleViewChange(val)}>
                         <SelectTrigger className="ring-0! h-[40px]! cursor-pointer outline-none! shadow-none! border bg-white rounded-[4px]">
@@ -154,7 +165,7 @@ export default function CalendarHeader({
                     </Select>
                     <DatePickerDropdown
                         onChange={(d) => {
-                            if(d) {
+                            if (d) {
                                 setCalDate(d);
                                 onGotoDate(d);
                             }
@@ -163,7 +174,7 @@ export default function CalendarHeader({
                     />
                     {addShift && (
                         <Button
-                            onClick={() => setOpenStepsSheet(true)}
+                            onClick={onAddClick}
                             className={BTN_CLASSES}
                         >
                             Add Shift
@@ -199,7 +210,6 @@ export default function CalendarHeader({
                 </div>
             </div>
             {/* <MultiStepModal open={openStepsSheet} setOpen={setOpenStepsSheet} /> */}
-            <AddShiftsModal open={openStepsSheet} setOpen={setOpenStepsSheet} />
         </>
     );
 }

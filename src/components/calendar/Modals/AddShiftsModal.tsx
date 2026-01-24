@@ -1,3 +1,4 @@
+import { useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import SheetModal from "@/components/common/SheetModal";
 import {
@@ -20,22 +21,38 @@ import {
   type AddShiftFormValues,
 } from "@/lib/validations/AddShifts";
 import { FormCheckbox } from "@/components/common/form/FormCheckbox";
-import { FormInput } from "@/components/common/form/FormInput";
 import { FormSelect } from "@/components/common/form/FormSelect";
+import type { Client } from "@/helpers/common";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { FormInput } from "@/components/common/form/FormInput";
+import { useCreateEventMutation } from "@/features/api/calendar/events";
+import type { CreateShiftPayload } from "@/features/api/types";
+import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface AddShiftsModalProps {
   open: boolean;
+  user: Client | null;
+  carers: Client[];
   setOpen: (open: boolean) => void;
 }
 
-export default function AddShiftsModal({ open, setOpen }: AddShiftsModalProps) {
-  const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+export default function AddShiftsModal({ open, setOpen, user, carers }: AddShiftsModalProps) {
+  const weekdays = [
+    { id: "0", label: "Mon" },
+    { id: "1", label: "Tue" },
+    { id: "2", label: "Wed" },
+    { id: "3", label: "Thu" },
+    { id: "4", label: "Fri" },
+    { id: "5", label: "Sat" },
+    { id: "6", label: "Sun" }
+  ]
+  const [createEvent, { isLoading }] = useCreateEventMutation()
 
-  const carers = [
-    { value: "talal", label: "Talal" },
-    { value: "waleed", label: "Waleed" },
-    { value: "iqra", label: "Iqra" },
-  ];
+  const carersOptions = useMemo(() => {
+    return carers.map((c) => ({ value: String(c.id), label: c.title }));
+  }, [carers]);
 
   const founder_codes = [
     { value: "21.5", label: "Bir 21.5" },
@@ -59,17 +76,17 @@ export default function AddShiftsModal({ open, setOpen }: AddShiftsModalProps) {
   const methods = useForm<AddShiftFormValues>({
     resolver: zodResolver(addShiftSchema),
     defaultValues: {
-      client_name: "",
-      carers: "",
+      client_id: "",
+      carers: [],
       founder_code: "",
       call_slot: "",
       visit_type: "",
-      startDate: null,
-      endDate: null,
-      startTime: "",
-      endTime: "",
-      recurring: false,
-      weekdays, // All selected by default
+      start_date: null,
+      end_date: null,
+      start_time: "",
+      end_time: "",
+      is_recurring: false,
+      recurring_days: weekdays.map((d) => d.id),
     },
   });
 
@@ -80,22 +97,49 @@ export default function AddShiftsModal({ open, setOpen }: AddShiftsModalProps) {
     reset();
   };
 
-  const onSubmit: SubmitHandler<AddShiftFormValues> = (data) => {
-    console.log("Form Data:", data);
+  const onSubmit: SubmitHandler<AddShiftFormValues> = async (data) => {
+    const payload: CreateShiftPayload = {
+      title: data.title,
+      client_id: data.client_id,
+      carers: data.carers,
+      start_time: data.start_time,
+      end_time: data.end_time,
+      is_recurring: data.is_recurring ? 1 : 0,
+      founder_code: data.founder_code,
+      call_slot: data.call_slot,
+      visit_type: data.visit_type,
+      recurring_days: !data.recurring_days ? [] : data.recurring_days,
+      start_date: data.start_date!.toISOString().split("T")[0],
+
+      ...(data.is_recurring
+        ? {}
+        : {
+          end_date: data.end_date!.toISOString().split("T")[0],
+        }),
+    };
+
+    await createEvent(payload).unwrap();
     close();
   };
 
-  const isRecurring = useWatch({ control, name: "recurring" }) ?? false;
-  const selectedDays = useWatch({ control, name: "weekdays" }) ?? weekdays;
+
+  const isRecurring = useWatch({ control, name: "is_recurring" }) ?? false;
+  const selectedDays = useWatch({ control, name: "recurring_days" }) ?? weekdays.map((d) => d.id);
 
   const toggleDay = (day: string) => {
     setValue(
-      "weekdays",
-      selectedDays.includes(day)
+      "recurring_days",
+      selectedDays.find((d) => d === day)
         ? selectedDays.filter((d) => d !== day)
         : [...selectedDays, day],
     );
   };
+
+  useEffect(() => {
+    if (user) {
+      setValue("client_id", String(user.id));
+    }
+  }, [user]);
 
   return (
     <SheetModal
@@ -114,16 +158,21 @@ export default function AddShiftsModal({ open, setOpen }: AddShiftsModalProps) {
               onSubmit={handleSubmit(onSubmit)}
               className="flex flex-col space-y-4 px-4"
             >
-              <FormInput
-                name="client_name"
-                label="Client Name"
-                placeholder="Enter name..."
-              />
+              <FormInput name="title" label="Title" placeholder="Enter title..." />
+              <div className="flex flex-col gap-1">
+                <Label>Client Name</Label>
+                <Input
+                  value={user?.title}
+                  placeholder="Enter name..."
+                  readOnly={user ? true : false}
+                />
+              </div>
               <FormSelect
                 name="carers"
                 label="Carers"
-                options={carers}
+                options={carersOptions}
                 placeholder="Select carers..."
+                multiple
               />
               <FormSelect
                 name="founder_code"
@@ -144,7 +193,7 @@ export default function AddShiftsModal({ open, setOpen }: AddShiftsModalProps) {
                 placeholder="Select visit type..."
               />
               <Controller
-                name="startDate"
+                name="start_date"
                 control={control}
                 render={({ field, fieldState }) => (
                   <div className="flex flex-col gap-2">
@@ -165,7 +214,7 @@ export default function AddShiftsModal({ open, setOpen }: AddShiftsModalProps) {
               />
 
               <Controller
-                name="endDate"
+                name="end_date"
                 control={control}
                 render={({ field, fieldState }) => (
                   <div className="flex flex-col gap-2">
@@ -184,21 +233,21 @@ export default function AddShiftsModal({ open, setOpen }: AddShiftsModalProps) {
                   </div>
                 )}
               />
-              <TimePickerDropdown name="startTime" label="Start Time" />
-              <TimePickerDropdown name="endTime" label="End Time" />
+              <TimePickerDropdown name="start_time" label="Start Time" />
+              <TimePickerDropdown name="end_time" label="End Time" />
 
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
-                  <FormCheckbox name="recurring" label="Recurring" />
+                  <FormCheckbox name="is_recurring" label="Recurring" />
                 </div>
                 {isRecurring && (
                   <div className="flex gap-2 mt-1 flex-wrap">
                     {weekdays.map((day) => (
                       <MultiSelectItem
-                        key={day}
-                        value={day}
-                        selected={selectedDays.includes(day)}
-                        onClick={() => toggleDay(day)}
+                        key={day.label}
+                        value={day.label}
+                        selected={selectedDays.some((d) => d === day.id)}
+                        onClick={() => toggleDay(day.id)}
                       />
                     ))}
                   </div>
@@ -223,9 +272,10 @@ export default function AddShiftsModal({ open, setOpen }: AddShiftsModalProps) {
           <Button
             type="submit"
             form="add-shift-form"
-            className={BTN_CLASSES_Secondary}
+            className={cn(BTN_CLASSES_Secondary, "flex items-center gap-1")}
+            disabled={isLoading}
           >
-            Add Shift
+            {isLoading && (<Loader2 className="w-4 h-4 animate-spin" /> )}Add Shift
           </Button>
         </div>
       }

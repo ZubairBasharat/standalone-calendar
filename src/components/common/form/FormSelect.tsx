@@ -1,34 +1,43 @@
-import { useFormContext, Controller } from "react-hook-form";
 import {
   Select,
-  SelectTrigger,
-  SelectValue,
   SelectContent,
   SelectItem,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { useFormContext, Controller } from 'react-hook-form';
+import { cn } from '@/lib/utils';
+import { DynamicIcon } from 'lucide-react/dynamic';
 
 interface Option {
-  value: string;
   label: string;
+  value: string;
 }
 
 interface FormSelectProps {
   name: string;
   label?: string;
-  options: Option[];
   placeholder?: string;
   className?: string;
+  options: Option[];
+  id?: string;
+  disabled?: boolean;
+  multiple?: boolean;
 }
 
-export function FormSelect({
+export const FormSelect: React.FC<FormSelectProps> = ({
   name,
   label,
-  options,
-  placeholder,
+  placeholder = 'Select option(s)',
   className,
-}: FormSelectProps) {
+  options,
+  id,
+  disabled = false,
+  multiple = false,
+}) => {
   const {
     control,
     formState: { errors },
@@ -36,41 +45,109 @@ export function FormSelect({
 
   const error = errors[name]?.message as string | undefined;
 
+  const isRtl = typeof document !== 'undefined' && document.dir === 'rtl';
+
   return (
-    <div className="flex flex-col gap-1">
-      {label && <Label htmlFor={name}>{label}</Label>}
+    <div className="space-y-2 w-full">
+      {label && <Label htmlFor={id}>{label}</Label>}
 
       <Controller
         name={name}
         control={control}
-        render={({ field }) => (
-          <Select
-            {...field}
-            onValueChange={field.onChange}
-            value={field.value || ""}
-          >
-            <SelectTrigger
-              id={name}
-              className={cn(error && "border-destructive", "w-full", className)}
-            >
-              <SelectValue placeholder={placeholder} />
-            </SelectTrigger>
-            <SelectContent>
-              {options.map((option) => (
-                <SelectItem
-                  key={option.value}
-                  value={option.value}
-                  className="focus:bg-custom-teal/70 focus:text-white"
+        render={({ field }) => {
+          if (multiple) {
+            const selectedValues: string[] = field.value || [];
+
+            const toggleValue = (val: string) => {
+              const newValue = selectedValues.includes(val)
+                ? selectedValues.filter((v) => v !== val)
+                : [...selectedValues, val];
+              field.onChange(newValue);
+            };
+
+            const selectedLabels = options
+              .filter((opt) => selectedValues.includes(opt.value))
+              .map((opt) => opt.label)
+              .join(', ');
+
+            return (
+              <Popover>
+                <PopoverTrigger
+                  className={cn(
+                    'border rounded px-3 py-2 w-full flex justify-between items-center',
+                    className,
+                    error && 'border-red-500',
+                    disabled && 'opacity-50 cursor-not-allowed',
+                  )}
+                  id={id}
+                  disabled={disabled}
                 >
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+                  <span className={cn('truncate w-full', isRtl ? 'text-right' : 'text-left')}>
+                    {selectedLabels || placeholder}
+                  </span>
+                  <DynamicIcon name="chevron-down" className="w-4 h-4 opacity-50" />
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-auto min-w-[250px] max-h-64 overflow-auto"
+                  align={isRtl ? 'end' : 'start'}
+                  dir={isRtl ? 'rtl' : 'ltr'}
+                >
+                  {options.map((option) => (
+                    <div
+                      key={option.value}
+                      className={cn(
+                        'flex items-center space-x-2 py-1',
+                        isRtl && 'flex-row-reverse space-x-reverse',
+                      )}
+                    >
+                      <Checkbox
+                        id={`${name}-${option.value}`}
+                        checked={selectedValues.includes(option.value)}
+                        onCheckedChange={() => toggleValue(option.value)}
+                        disabled={disabled}
+                      />
+                      <label htmlFor={`${name}-${option.value}`} className="text-sm">
+                        {option.label}
+                      </label>
+                    </div>
+                  ))}
+                </PopoverContent>
+              </Popover>
+            );
+          }
+
+          return (
+            <Select onValueChange={field.onChange} value={field.value} disabled={disabled}>
+              <SelectTrigger
+                id={id}
+                className={cn(error && "border-destructive", "w-full", className)}
+              >
+                <SelectValue
+                  placeholder={placeholder}
+                  className={cn('truncate w-full')}
+                />
+              </SelectTrigger>
+              <SelectContent
+                side="bottom"
+                align={isRtl ? 'end' : 'start'}
+                dir={isRtl ? 'rtl' : 'ltr'}
+              >
+                {options.map((option) => (
+                  <SelectItem
+                    key={option.value}
+                    value={option.value}
+                    className={cn(isRtl ? 'text-right' : 'text-left')}
+                  >
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          );
+        }}
       />
 
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && <span className="text-red-500 text-sm">{error}</span>}
     </div>
   );
-}
+};
