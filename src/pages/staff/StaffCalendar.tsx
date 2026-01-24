@@ -20,7 +20,7 @@ export default function StaffCalendar() {
     const [openAddModal, setOpenAddModal] = useState(false);
     const params = useParams();
     const userId = params.id;
-     const { data: clients = [], isLoading, isFetching } = useAllUsersQuery();
+     const { data: clients = [] } = useAllUsersQuery();
     const careers = useMemo(() => {
         if(clients.length > 0) {
             return clients.filter((c) => c.type === "carer");

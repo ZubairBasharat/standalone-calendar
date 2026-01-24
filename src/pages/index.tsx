@@ -9,7 +9,7 @@ import CalendarHeader from "@/components/calendar/CalendarHeader";
 import SearchCarerDropdown from "@/components/SearchCareerDropdown";
 import ResourceLabel from "@/components/calendar/ResourceLabel";
 
-import { calendarViewOptions, type CalendarFilters, type Client, type EventType } from "@/helpers/common";
+import { calendarViewOptions, type CalendarFilters } from "@/helpers/common";
 import { useAllUsersQuery } from "@/features/api/users";
 import { useGetAllEventsQuery } from "@/features/api/calendar/events";
 import FullScreenLoader from "@/components/common/FullScreenLoader";
@@ -72,17 +72,17 @@ export default function CalendarDashboard() {
     return filtered.length > 0 ? filtered : clients;
   }, [clients, search]);
 
-  const filteredEvents = useMemo(() => {
-    return events.filter((e) => {
-      const status = filters.status;
-      const shiftType = filters.shiftType;
+//   const filteredEvents = useMemo(() => {
+//     return events.filter((e) => {
+//       const status = filters.status;
+//       const shiftType = filters.shiftType;
 
-      if (status === "all" && shiftType === "all") return true;
-      if (status === "all") return e.shiftType === shiftType;
-      if (shiftType === "all") return e.status === status;
-      return e.status === status && e.shiftType === shiftType;
-    });
-  }, [events, filters.status, filters.shiftType]);
+//       if (status === "all" && shiftType === "all") return true;
+//       if (status === "all") return e.shiftType === shiftType;
+//       if (shiftType === "all") return e.status === status;
+//       return e.status === status && e.shiftType === shiftType;
+//     });
+//   }, [events, filters.status, filters.shiftType]);
 
 
   // --------------------------
@@ -133,7 +133,7 @@ export default function CalendarDashboard() {
     setCurrentDate(calendarApi.getDate());
   };
 
-  const toggleClientSelection = (option: Client) => {
+  const toggleClientSelection = () => {
     // You can implement selection logic if needed
     // Currently using search & selectedClients
   };
