@@ -1,4 +1,4 @@
-import type { AssignedScheduler, CarerResponse } from '@/features/api/types';
+import type { AssignedScheduler } from '@/features/api/types';
 
 export const carers = [
     { id: "k1", name: "Makhdoom", initials: "MK", hours: 8 },
