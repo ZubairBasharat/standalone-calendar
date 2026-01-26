@@ -13,7 +13,18 @@ interface MultiStepModalProps {
   setOpen: (open: boolean) => void;
 }
 
-const visits = [
+export type VisitStatus = "Pending" | "Completed" | "InProgress" | "Cancelled";
+
+export interface Visit {
+  id: number;
+  name: string;
+  status: VisitStatus;
+  date: string;
+  time: string;
+  location: string;
+}
+
+const visits: Visit[] = [
   {
     id: 1,
     name: "John Smith",
@@ -45,6 +56,70 @@ const visits = [
     date: "Wed, 15 Jan",
     time: "08:00 - 16:00",
     location: "3028",
+  },
+  {
+    id: 5,
+    name: "Sarah Williams",
+    status: "Pending",
+    date: "Thu, 16 Jan",
+    time: "09:30 - 17:30",
+    location: "4102",
+  },
+  {
+    id: 6,
+    name: "David Miller",
+    status: "InProgress",
+    date: "Thu, 16 Jan",
+    time: "07:00 - 15:00",
+    location: "2874",
+  },
+  {
+    id: 7,
+    name: "Olivia Davis",
+    status: "Completed",
+    date: "Fri, 17 Jan",
+    time: "11:00 - 19:00",
+    location: "1933",
+  },
+  {
+    id: 8,
+    name: "James Wilson",
+    status: "Pending",
+    date: "Fri, 17 Jan",
+    time: "08:00 - 16:00",
+    location: "3561",
+  },
+  {
+    id: 9,
+    name: "Sophia Martinez",
+    status: "Cancelled",
+    date: "Sat, 18 Jan",
+    time: "10:00 - 18:00",
+    location: "2219",
+  },
+  {
+    id: 10,
+    name: "Daniel Anderson",
+    status: "InProgress",
+    date: "Sat, 18 Jan",
+    time: "06:00 - 14:00",
+    location: "4790",
+  },
+  {
+    id: 11,
+    name: "Emma Thompson",
+    status: "Pending",
+    date: "Sun, 19 Jan",
+    time: "09:00 - 17:00",
+    location: "3017",
+  },
+  {
+    id: 12,
+    name: "Liam Harris",
+    status: "Completed",
+    date: "Sun, 19 Jan",
+    time: "12:00 - 20:00",
+    location: "1645",
   },
 ];
 
@@ -148,7 +223,7 @@ export default function MultiStepModal({ open, setOpen }: MultiStepModalProps) {
               </div>
 
               {/* Alert */}
-              <div className="bg-[#FEF3C7] border border-[#FCD34D] rounded-[4px] flex items-center p-4 gap-2">
+              <div className="bg-[#FEF3C7] border border-[#FCD34D] rounded-[4px] flex items-center px-4 py-3 gap-2">
                 <CircleAlert className="w-5 h-5 text-amber-400" />
                 <p className="text-[#92400E]">
                   Some visits are excluded and cannot be reassigned
@@ -156,7 +231,7 @@ export default function MultiStepModal({ open, setOpen }: MultiStepModalProps) {
               </div>
 
               {/* Visits */}
-              <div className="flex flex-col space-y-2">
+              <div className="flex flex-col space-y-2 overflow-y-auto max-h-[calc(100vh-340px)]">
                 {visits.map((visit) => {
                   const eligible = isEligible(visit.status);
                   const selected = selectedVisits.includes(visit.id);
