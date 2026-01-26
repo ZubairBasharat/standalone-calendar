@@ -48,13 +48,19 @@ export default function CalendarDashboard() {
     };
   }, [currentDate]);
 
-  const { data: events = [], isLoading: isLoadingEvents, isFetching: isFetchingEvents } = useGetAllEventsQuery({
-    startDate: reqDate.start,
-    endDate: reqDate.end,
-  },{
-    refetchOnMountOrArgChange: true,
-  });
-
+  const {
+    data: events = [],
+    isLoading: isLoadingEvents,
+    isFetching: isFetchingEvents,
+  } = useGetAllEventsQuery(
+    {
+      startDate: reqDate.start,
+      endDate: reqDate.end,
+    },
+    {
+      refetchOnMountOrArgChange: true,
+    },
+  );
 
   // --------------------------
   // Derived State
@@ -63,8 +69,10 @@ export default function CalendarDashboard() {
   const filteredClients = useMemo(() => {
     // Filter by search
     const q = search.trim().toLowerCase();
-    let filtered = clients.filter(
-      (c) => c.title.toLowerCase().includes(q) || c.initials.toLowerCase().includes(q)
+    const filtered = clients.filter(
+      (c) =>
+        c.title.toLowerCase().includes(q) ||
+        c.initials.toLowerCase().includes(q),
     );
 
     // Filter by selection
@@ -72,18 +80,17 @@ export default function CalendarDashboard() {
     return filtered.length > 0 ? filtered : clients;
   }, [clients, search]);
 
-//   const filteredEvents = useMemo(() => {
-//     return events.filter((e) => {
-//       const status = filters.status;
-//       const shiftType = filters.shiftType;
+  //   const filteredEvents = useMemo(() => {
+  //     return events.filter((e) => {
+  //       const status = filters.status;
+  //       const shiftType = filters.shiftType;
 
-//       if (status === "all" && shiftType === "all") return true;
-//       if (status === "all") return e.shiftType === shiftType;
-//       if (shiftType === "all") return e.status === status;
-//       return e.status === status && e.shiftType === shiftType;
-//     });
-//   }, [events, filters.status, filters.shiftType]);
-
+  //       if (status === "all" && shiftType === "all") return true;
+  //       if (status === "all") return e.shiftType === shiftType;
+  //       if (shiftType === "all") return e.status === status;
+  //       return e.status === status && e.shiftType === shiftType;
+  //     });
+  //   }, [events, filters.status, filters.shiftType]);
 
   // --------------------------
   // Calendar Ready
@@ -154,59 +161,59 @@ export default function CalendarDashboard() {
 
   return (
     <>
-    <div className="p-4">
-      <CalendarHeader
-        title={formattedTitle}
-        view={view}
-        viewOptions={calendarViewOptions.resource}
-        calDate={currentDate}
-        isExpandView={expandView}
-        setCalDate={setCurrentDate}
-        handlePrev={handlePrev}
-        handleToday={handleToday}
-        handleNext={handleNext}
-        handleViewChange={handleViewChange}
-        filters={filters}
-        onExpandView={setExpandView}
-        setFilters={setFilters}
-        onGotoDate={(d) => calendarRef.current?.getApi().gotoDate(d)}
-      />
+      <div className="p-4">
+        <CalendarHeader
+          title={formattedTitle}
+          view={view}
+          viewOptions={calendarViewOptions.resource}
+          calDate={currentDate}
+          isExpandView={expandView}
+          setCalDate={setCurrentDate}
+          handlePrev={handlePrev}
+          handleToday={handleToday}
+          handleNext={handleNext}
+          handleViewChange={handleViewChange}
+          filters={filters}
+          onExpandView={setExpandView}
+          setFilters={setFilters}
+          onGotoDate={(d) => calendarRef.current?.getApi().gotoDate(d)}
+        />
 
-      <div className="bg-white">
-        {calendarReady && (
-          <CalendarScheduler
-            plugins={[resourceTimelinePlugin, interactionPlugin]}
-            calendarRef={calendarRef}
-            view={view}
-            currentDate={currentDate}
-            setCurrentDate={setCurrentDate}
-            resources={filteredClients}
-            events={events}
-            expandView={expandView}
-            resourceLabelContent={(arg) => <ResourceLabel {...arg} />}
-            resourceAreaHeaderContent={() => (
-              <SearchCarerDropdown
-                open={open}
-                onClose={() => {
-                  setOpen(false);
-                  setSearch("");
-                }}
-                onConfirm={() => {
-                  setSearch("");
-                  setOpen(false);
-                }}
-                setSearch={setSearch}
-                setOpen={setOpen}
-                selected={selectedClients}
-                onSelect={toggleClientSelection}
-                users={filteredClients}
-              />
-            )}
-          />
-        )}
+        <div className="bg-white">
+          {calendarReady && (
+            <CalendarScheduler
+              plugins={[resourceTimelinePlugin, interactionPlugin]}
+              calendarRef={calendarRef}
+              view={view}
+              currentDate={currentDate}
+              setCurrentDate={setCurrentDate}
+              resources={filteredClients}
+              events={events}
+              expandView={expandView}
+              resourceLabelContent={(arg) => <ResourceLabel {...arg} />}
+              resourceAreaHeaderContent={() => (
+                <SearchCarerDropdown
+                  open={open}
+                  onClose={() => {
+                    setOpen(false);
+                    setSearch("");
+                  }}
+                  onConfirm={() => {
+                    setSearch("");
+                    setOpen(false);
+                  }}
+                  setSearch={setSearch}
+                  setOpen={setOpen}
+                  selected={selectedClients}
+                  onSelect={toggleClientSelection}
+                  users={filteredClients}
+                />
+              )}
+            />
+          )}
+        </div>
       </div>
-    </div>
-    {(isFetchingEvents || isLoadingEvents) && <FullScreenLoader />}
+      {(isFetchingEvents || isLoadingEvents) && <FullScreenLoader />}
     </>
-  )
+  );
 }

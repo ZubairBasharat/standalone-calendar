@@ -32,7 +32,7 @@ export function DatePickerDropdown({
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
-            className={`justify-start gap-2 h-10 ${error && "border-destructive"}`}
+            className={`justify-start hover:bg-card gap-2 h-10 rounded-[4px] ${error && "border-destructive"}`}
           >
             <CalendarIcon className="h-4 w-4" />
             {date ? date.toDateString() : "Select date"}
