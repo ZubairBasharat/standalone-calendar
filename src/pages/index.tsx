@@ -13,6 +13,7 @@ import { calendarViewOptions, type CalendarFilters } from "@/helpers/common";
 import { useAllUsersQuery } from "@/features/api/users";
 import { useGetAllEventsQuery } from "@/features/api/calendar/events";
 import FullScreenLoader from "@/components/common/FullScreenLoader";
+import MultiStepModal from "@/components/calendar/Modals/MultiStepsModal";
 
 export default function CalendarDashboard() {
   const calendarRef = useRef<FullCalendar | null>(null);
@@ -20,6 +21,7 @@ export default function CalendarDashboard() {
   // --------------------------
   // State
   // --------------------------
+  const [openStepsSheet, setOpenStepsSheet] = useState(false);
   const [view, setCurrentView] = useState(calendarViewOptions.resource[0].id);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [search, setSearch] = useState("");
@@ -161,11 +163,12 @@ export default function CalendarDashboard() {
 
   return (
     <>
-      <div className="p-4">
+      <div className="p-4 max-w-[1496px] mx-auto">
         <CalendarHeader
           title={formattedTitle}
           view={view}
           viewOptions={calendarViewOptions.resource}
+          publishShift={true}
           calDate={currentDate}
           isExpandView={expandView}
           setCalDate={setCurrentDate}
@@ -176,6 +179,7 @@ export default function CalendarDashboard() {
           filters={filters}
           onExpandView={setExpandView}
           setFilters={setFilters}
+          onPublishClick={() => setOpenStepsSheet(true)}
           onGotoDate={(d) => calendarRef.current?.getApi().gotoDate(d)}
         />
 
@@ -214,6 +218,7 @@ export default function CalendarDashboard() {
         </div>
       </div>
       {(isFetchingEvents || isLoadingEvents) && <FullScreenLoader />}
+      <MultiStepModal open={openStepsSheet} setOpen={setOpenStepsSheet} />
     </>
   );
 }

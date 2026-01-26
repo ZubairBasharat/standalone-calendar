@@ -43,6 +43,7 @@ interface CalendarHeaderProps {
   isExpandView: boolean;
   viewOptions: SelectOptions[];
   addShift?: boolean;
+  publishShift?: boolean;
   user?: Client | null;
   setCalDate: (d: Date) => void;
   handlePrev: () => void;
@@ -53,6 +54,7 @@ interface CalendarHeaderProps {
   onExpandView: (value: boolean) => void;
   setFilters?: (value: CalendarFilters) => void;
   onAddClick?: () => void;
+  onPublishClick?: () => void;
 }
 
 export default function CalendarHeader({
@@ -63,6 +65,7 @@ export default function CalendarHeader({
   isExpandView,
   viewOptions,
   addShift = false,
+  publishShift = false,
   user,
   setCalDate,
   handlePrev,
@@ -73,9 +76,10 @@ export default function CalendarHeader({
   onExpandView,
   setFilters,
   onAddClick,
+  onPublishClick,
 }: CalendarHeaderProps) {
   const BTN_CLASSES =
-    "px-4 py-2 h-[40px] bg-white border text-foreground rounded-[4px] hover:bg-blue-600 hover:text-white cursor-pointer";
+    "px-4 py-2 h-[40px] bg-white border text-foreground rounded-[4px] hover:bg-custom-teal hover:text-white cursor-pointer";
   return (
     <>
       <div className="flex items-center justify-between mb-4 z-10 relative">
@@ -176,6 +180,11 @@ export default function CalendarHeader({
               Add Shift
             </Button>
           )}
+          {publishShift && (
+            <Button onClick={onPublishClick} className={BTN_CLASSES}>
+              Publish Shift
+            </Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -208,7 +217,6 @@ export default function CalendarHeader({
           </DropdownMenu>
         </div>
       </div>
-      {/* <MultiStepModal open={openStepsSheet} setOpen={setOpenStepsSheet} /> */}
     </>
   );
 }

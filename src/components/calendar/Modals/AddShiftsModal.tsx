@@ -23,8 +23,6 @@ import {
 import { FormCheckbox } from "@/components/common/form/FormCheckbox";
 import { FormSelect } from "@/components/common/form/FormSelect";
 import type { Client } from "@/helpers/common";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { FormInput } from "@/components/common/form/FormInput";
 import { useCreateEventMutation } from "@/features/api/calendar/events";
 import type { CreateShiftPayload } from "@/features/api/types";
@@ -38,7 +36,12 @@ interface AddShiftsModalProps {
   setOpen: (open: boolean) => void;
 }
 
-export default function AddShiftsModal({ open, setOpen, user, carers }: AddShiftsModalProps) {
+export default function AddShiftsModal({
+  open,
+  setOpen,
+  user,
+  carers,
+}: AddShiftsModalProps) {
   const weekdays = [
     { id: "0", label: "Mon" },
     { id: "1", label: "Tue" },
@@ -46,9 +49,9 @@ export default function AddShiftsModal({ open, setOpen, user, carers }: AddShift
     { id: "3", label: "Thu" },
     { id: "4", label: "Fri" },
     { id: "5", label: "Sat" },
-    { id: "6", label: "Sun" }
-  ]
-  const [createEvent, { isLoading }] = useCreateEventMutation()
+    { id: "6", label: "Sun" },
+  ];
+  const [createEvent, { isLoading }] = useCreateEventMutation();
 
   const carersOptions = useMemo(() => {
     return carers.map((c) => ({ value: String(c.id), label: c.title }));
@@ -114,17 +117,17 @@ export default function AddShiftsModal({ open, setOpen, user, carers }: AddShift
       ...(data.is_recurring
         ? {}
         : {
-          end_date: data.end_date!.toISOString().split("T")[0],
-        }),
+            end_date: data.end_date!.toISOString().split("T")[0],
+          }),
     };
 
     await createEvent(payload).unwrap();
     close();
   };
 
-
   const isRecurring = useWatch({ control, name: "is_recurring" }) ?? false;
-  const selectedDays = useWatch({ control, name: "recurring_days" }) ?? weekdays.map((d) => d.id);
+  const selectedDays =
+    useWatch({ control, name: "recurring_days" }) ?? weekdays.map((d) => d.id);
 
   const toggleDay = (day: string) => {
     setValue(
@@ -158,11 +161,16 @@ export default function AddShiftsModal({ open, setOpen, user, carers }: AddShift
               onSubmit={handleSubmit(onSubmit)}
               className="flex flex-col space-y-4 px-4"
             >
-              <FormInput name="title" label="Title" placeholder="Enter title..." />
+              <FormInput
+                name="title"
+                label="Title"
+                placeholder="Enter title..."
+              />
               <div className="flex flex-col gap-1">
-                <Label>Client Name</Label>
-                <Input
-                  value={user?.title}
+                <FormInput
+                  name="client_name"
+                  label="Client Name"
+                  value={`${user?.title}`}
                   placeholder="Enter name..."
                   readOnly={user ? true : false}
                 />
@@ -275,7 +283,7 @@ export default function AddShiftsModal({ open, setOpen, user, carers }: AddShift
             className={cn(BTN_CLASSES_Secondary, "flex items-center gap-1")}
             disabled={isLoading}
           >
-            {isLoading && (<Loader2 className="w-4 h-4 animate-spin" /> )}Add Shift
+            {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}Add Shift
           </Button>
         </div>
       }

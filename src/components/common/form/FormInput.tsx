@@ -10,6 +10,7 @@ interface FormInputProps {
   placeholder?: string;
   className?: string;
   readOnly?: boolean;
+  value?: string;
 }
 
 export function FormInput({
@@ -18,7 +19,8 @@ export function FormInput({
   type = "text",
   placeholder,
   className,
-  readOnly
+  readOnly,
+  value,
 }: FormInputProps) {
   const {
     register,
@@ -39,6 +41,7 @@ export function FormInput({
         className={cn(error && "border-destructive", className)}
         {...register(name)}
         readOnly={readOnly}
+        value={value}
       />
 
       {error && <p className="text-xs text-destructive">{error}</p>}
