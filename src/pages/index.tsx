@@ -69,16 +69,15 @@ export default function CalendarDashboard() {
   // --------------------------
   const selectedClients = useMemo(() => clients, [clients]);
   const filteredClients = useMemo(() => {
-    // Filter by search
     const q = search.trim().toLowerCase();
-    const filtered = clients.filter(
-      (c) =>
-        c.title.toLowerCase().includes(q) ||
-        c.initials.toLowerCase().includes(q),
-    );
 
-    // Filter by selection
-    // If no selection, return all
+    const filtered = clients.filter((c) => {
+      const title = c.title?.toLowerCase() ?? "";
+      const initials = c.initials?.toLowerCase() ?? "";
+
+      return title.includes(q) || initials.includes(q);
+    });
+
     return filtered.length > 0 ? filtered : clients;
   }, [clients, search]);
 
