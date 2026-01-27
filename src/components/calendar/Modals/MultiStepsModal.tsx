@@ -14,12 +14,26 @@ import {
   Dot,
   Funnel,
   MapPin,
+  X,
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import SearchCarerDropdown from "@/components/SearchCareerDropdown";
 import type { Client } from "@/helpers/common";
 import type { PublishShiftWorkflowPayload } from "@/features/api/types";
 import ActionCard from "@/components/ActionCard";
+import { FormInput } from "@/components/common/form/FormInput";
+import { FormSelect } from "@/components/common/form/FormSelect";
+import { FormProvider, useForm, useWatch } from "react-hook-form";
+
+type FilterFormValues = {
+  quickFilters: string[];
+  postcode?: string;
+  availableBy?: string;
+  availableFrom?: string;
+  availableTo?: string;
+  visaType?: string;
+  coverageCodes: string[];
+};
 
 /* ---------------- Types ---------------- */
 
@@ -141,6 +155,7 @@ export default function MultiStepModal({
 
   const [step, setStep] = useState(1);
   const [selectedVisits, setSelectedVisits] = useState<number[]>([]);
+  const [filterOpen, setFilterOpen] = useState(false);
 
   const [carerDropdownOpen, setCarerDropdownOpen] = useState(false);
   const [carerSearch, setCarerSearch] = useState("");
@@ -150,6 +165,17 @@ export default function MultiStepModal({
     selectedVisitIds: [],
     action: null,
   });
+
+  const filterForm = useForm<FilterFormValues>({
+    defaultValues: {
+      quickFilters: [],
+      coverageCodes: [],
+    },
+  });
+
+  const [appliedFilters, setAppliedFilters] = useState<FilterFormValues | null>(
+    null,
+  );
 
   /* ---------------- Api Payload ---------------- */
   const buildPayload = (): PublishShiftWorkflowPayload | null => {
@@ -281,9 +307,42 @@ export default function MultiStepModal({
     type: "carer",
   }));
 
-  const filteredClients = carerClients.filter((c) =>
-    c.title.toLowerCase().includes(carerSearch.toLowerCase()),
-  );
+  const filteredClients = carerClients.filter((client) => {
+    if (
+      carerSearch &&
+      !client.title.toLowerCase().includes(carerSearch.toLowerCase())
+    ) {
+      return false;
+    }
+    if (!appliedFilters) return true;
+
+    // Example: < 40 hrs/week
+    const hours = client.hours ?? 0;
+
+    if (appliedFilters.quickFilters.includes("< 40 hrs/week") && hours >= 40) {
+      return false;
+    }
+
+    // Postcode (placeholder logic)
+    if (
+      appliedFilters.postcode &&
+      !client.title
+        .toLowerCase()
+        .includes(appliedFilters.postcode.toLowerCase())
+    ) {
+      return false;
+    }
+
+    // Coverage codes (placeholder)
+    if (
+      appliedFilters.coverageCodes.length > 0 &&
+      !appliedFilters.coverageCodes.some((c) => client.title.includes(c))
+    ) {
+      return false;
+    }
+
+    return true;
+  });
 
   const selectedCarerName = workflow.targetCarerId
     ? carerClients.find((c) => c.id === String(workflow.targetCarerId))?.title
@@ -326,6 +385,34 @@ export default function MultiStepModal({
   const hasCancelled = selectedVisitObjects.some(
     (v) => v.status === "Cancelled",
   );
+
+  const quickFilters = useWatch({
+    control: filterForm.control,
+    name: "quickFilters",
+  });
+
+  const coverageCodes = useWatch({
+    control: filterForm.control,
+    name: "coverageCodes",
+  });
+
+  const toggleQuickFilter = (item: string) => {
+    filterForm.setValue(
+      "quickFilters",
+      quickFilters.includes(item)
+        ? quickFilters.filter((i) => i !== item)
+        : [...quickFilters, item],
+    );
+  };
+
+  const toggleCoverageCode = (code: string) => {
+    filterForm.setValue(
+      "coverageCodes",
+      coverageCodes.includes(code)
+        ? coverageCodes.filter((c) => c !== code)
+        : [...coverageCodes, code],
+    );
+  };
 
   const progressWidth = `${(step / totalSteps) * 100}%`;
   return (
@@ -522,7 +609,7 @@ export default function MultiStepModal({
                 )}
 
                 {workflow.action === "reassign" && (
-                  <div className="space-y-4">
+                  <div className="space-y-4 h-[calc(100vh-260px)] overflow-y-auto">
                     <div className="flex gap-2 items-center">
                       <div className="border w-[90%] rounded">
                         <SearchCarerDropdown
@@ -540,56 +627,209 @@ export default function MultiStepModal({
                         />
                       </div>
                       <Button
-                        className={`w-[10%] text-black hover:text-white ${BTN_CLASSES_Secondary}`}
+                        onClick={() => setFilterOpen((prev) => !prev)}
+                        className={`w-[10%] text-black hover:text-white ${BTN_CLASSES_Secondary} ${filterOpen ? "bg-custom-teal text-white" : ""}`}
                       >
                         <Funnel className="w-6 h-6" />
                       </Button>
                     </div>
-                    <div className="flex flex-col space-y-4">
-                      {filteredClients.map((client) => {
-                        const selected = selectedClients.some(
-                          (c) => c.id === client.id,
-                        );
-
-                        return (
-                          <div
-                            key={client.id}
-                            className={`flex items-center justify-between p-3 border rounded cursor-pointer bg-card ${
-                              selected
-                                ? "border-custom-teal"
-                                : "border-gray-300"
-                            }`}
-                            onClick={() => toggleClientSelection(client)}
+                    {filterOpen && (
+                      <>
+                        <div className="flex gap-2 items-center flex-wrap">
+                          <p className="px-3 py-1 text-xs bg-blue-100 text-teal-800 border border-custom-teal flex items-center gap-1 rounded-full">
+                            <span>Available by 02:05</span>
+                            <X
+                              className="w-4 h-4 cursor-pointer"
+                              onClick={() => setFilterOpen(false)}
+                            />
+                          </p>
+                          <Button
+                            variant="ghost"
+                            className="text-xs text-custom-teal px-0"
+                            onClick={() => {
+                              filterForm.reset();
+                              setAppliedFilters(null);
+                            }}
                           >
-                            <div className="flex flex-row items-center gap-3">
-                              {/* Avatar */}
-                              <div
-                                className={`w-14 h-14 rounded-full flex items-center justify-center text-sm font-semibold ${Number(client.id) % 2 === 1 ? client.colorClass : "bg-amber-400 text-white"}`}
-                              >
-                                {client.initials}
+                            Clear all
+                          </Button>
+                        </div>
+                        <FormProvider {...filterForm}>
+                          <div className="border rounded p-4 bg-gray-50 space-y-6">
+                            <div>
+                              <p className="text-sm font-semibold text-gray-500 mb-2">
+                                QUICK FILTERS
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                                {[
+                                  "Off Today",
+                                  "On Holiday",
+                                  "< 40 hrs/week",
+                                  "Near Postcode",
+                                  "Visited Before",
+                                  "Ending Visits",
+                                  "Morning Carers",
+                                  "Evening Carers",
+                                ].map((item) => (
+                                  <Button
+                                    key={item}
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => toggleQuickFilter(item)}
+                                    className={`text-xs rounded-full px-2.5 ${
+                                      quickFilters.includes(item)
+                                        ? "border-custom-teal bg-teal-50 text-custom-teal"
+                                        : ""
+                                    }`}
+                                  >
+                                    {item}
+                                  </Button>
+                                ))}
                               </div>
+                            </div>
 
-                              {/* Name */}
-                              <div>
-                                <p className="text-sm font-medium text-black">
-                                  {client.title}
-                                </p>
-                                <div className="flex items-center space-x-2 h-max">
-                                  <p className="text-xs text-gray-500">
-                                    {client.hours} hrs
-                                  </p>
-                                  <div className="flex items-center">
-                                    <Dot />
-                                    <Button className="text-xs text-custom-teal bg-transparent px-0 py-0 hover:bg-transparent">
-                                      View availability
+                            {/* Location & Availability */}
+                            <div>
+                              <p className="text-sm font-semibold text-gray-500 mb-2">
+                                LOCATION & AVAILABILITY
+                              </p>
+                              <div className="grid grid-cols-2 gap-2">
+                                <FormInput
+                                  name="postcode"
+                                  label="Client Postcode"
+                                  className="border p-2 rounded text-xs font-normal"
+                                  placeholder="e.g. B26n3PD"
+                                />
+                                <FormInput
+                                  name="availableBy"
+                                  label="Available By"
+                                  placeholder="--------"
+                                  className="border p-2 rounded text-xs font-normal"
+                                />
+                                <FormInput
+                                  name="availableFrom"
+                                  label="Available From"
+                                  placeholder="--------"
+                                  className="border p-2 rounded text-xs font-normal"
+                                />
+                                <FormInput
+                                  name="availableTo"
+                                  label="Available To"
+                                  placeholder="--------"
+                                  className="border p-2 rounded text-xs font-normal"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Compliance */}
+                            <div className="space-y-2">
+                              <Label>COMPLIANCE & COVERAGE</Label>
+                              <FormSelect
+                                name="visaType"
+                                label="Visa Type"
+                                placeholder="All types"
+                                className="bg-card"
+                              />
+                              <div className="flex flex-col gap-2 mt-2">
+                                <Label>Area Codes</Label>
+                                <div className="flex flex-wrap gap-2">
+                                  {[
+                                    "B26",
+                                    "B27",
+                                    "B28",
+                                    "B13",
+                                    "B14",
+                                    "B11",
+                                    "B10",
+                                    "B9",
+                                  ].map((code) => (
+                                    <Button
+                                      key={code}
+                                      type="button"
+                                      onClick={() => toggleCoverageCode(code)}
+                                      className={`rounded-full text-xs px-3.5 border hover:bg-accent ${
+                                        coverageCodes.includes(code)
+                                          ? "bg-teal-100 text-custom-teal border-custom-teal"
+                                          : "bg-card border-gray-200 text-black"
+                                      }`}
+                                    >
+                                      {code}
                                     </Button>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex justify-end pt-4">
+                              <Button
+                                className={BTN_CLASSES_Third}
+                                onClick={filterForm.handleSubmit((values) => {
+                                  setAppliedFilters(values);
+                                  setFilterOpen(false);
+                                })}
+                              >
+                                Apply
+                              </Button>
+                            </div>
+                          </div>
+                        </FormProvider>
+                      </>
+                    )}
+
+                    <div className="flex flex-col space-y-4">
+                      {filteredClients.length > 0 ? (
+                        filteredClients.map((client) => {
+                          const selected = selectedClients.some(
+                            (c) => c.id === client.id,
+                          );
+
+                          return (
+                            <div
+                              key={client.id}
+                              className={`flex items-center justify-between p-3 border rounded cursor-pointer bg-card ${
+                                selected
+                                  ? "border-custom-teal"
+                                  : "border-gray-300"
+                              }`}
+                              onClick={() => toggleClientSelection(client)}
+                            >
+                              <div className="flex flex-row items-center gap-3">
+                                {/* Avatar */}
+                                <div
+                                  className={`w-14 h-14 rounded-full flex items-center justify-center text-sm font-semibold ${
+                                    Number(client.id) % 2 === 1
+                                      ? client.colorClass
+                                      : "bg-amber-400 text-white"
+                                  }`}
+                                >
+                                  {client.initials}
+                                </div>
+
+                                {/* Name */}
+                                <div>
+                                  <p className="text-sm font-medium text-black">
+                                    {client.title}
+                                  </p>
+                                  <div className="flex items-center space-x-2 h-max">
+                                    <p className="text-xs text-gray-500">
+                                      {client.hours} hrs
+                                    </p>
+                                    <div className="flex items-center">
+                                      <Dot />
+                                      <Button className="text-xs text-custom-teal bg-transparent px-0 py-0 hover:bg-transparent">
+                                        View availability
+                                      </Button>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })
+                      ) : (
+                        <div className="text-center text-sm text-gray-500 p-6 bg-accent rounded border border-gray-300">
+                          No Carers Available
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

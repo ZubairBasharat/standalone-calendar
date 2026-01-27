@@ -26,7 +26,7 @@ interface FormSelectProps {
   label?: string;
   placeholder?: string;
   className?: string;
-  options: Option[];
+  options?: Option[];
   id?: string;
   disabled?: boolean;
   multiple?: boolean;
@@ -70,7 +70,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
             };
 
             const selectedLabels = options
-              .filter((opt) => selectedValues.includes(opt.value))
+              ?.filter((opt) => selectedValues.includes(opt.value))
               .map((opt) => opt.label)
               .join(", ");
 
@@ -104,7 +104,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
                   align={isRtl ? "end" : "start"}
                   dir={isRtl ? "rtl" : "ltr"}
                 >
-                  {options.map((option) => (
+                  {options?.map((option) => (
                     <div
                       key={option.value}
                       className={cn(
@@ -155,7 +155,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
                 align={isRtl ? "end" : "start"}
                 dir={isRtl ? "rtl" : "ltr"}
               >
-                {options.map((option) => (
+                {options?.map((option) => (
                   <SelectItem
                     key={option.value}
                     value={option.value}
