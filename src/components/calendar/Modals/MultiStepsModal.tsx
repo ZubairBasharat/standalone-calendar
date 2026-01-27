@@ -24,6 +24,11 @@ import ActionCard from "@/components/ActionCard";
 import { FormInput } from "@/components/common/form/FormInput";
 import { FormSelect } from "@/components/common/form/FormSelect";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type FilterFormValues = {
   quickFilters: string[];
@@ -174,6 +179,9 @@ export default function MultiStepModal({
   });
 
   const [appliedFilters, setAppliedFilters] = useState<FilterFormValues | null>(
+    null,
+  );
+  const [openAvailabilityId, setOpenAvailabilityId] = useState<string | null>(
     null,
   );
 
@@ -815,9 +823,60 @@ export default function MultiStepModal({
                                     </p>
                                     <div className="flex items-center">
                                       <Dot />
-                                      <Button className="text-xs text-custom-teal bg-transparent px-0 py-0 hover:bg-transparent">
-                                        View availability
-                                      </Button>
+                                      <DropdownMenu
+                                        open={openAvailabilityId === client.id}
+                                        onOpenChange={(open) =>
+                                          setOpenAvailabilityId(
+                                            open ? client.id : null,
+                                          )
+                                        }
+                                      >
+                                        <DropdownMenuTrigger asChild>
+                                          <Button
+                                            type="button"
+                                            className="text-xs text-custom-teal bg-transparent px-0 py-0 hover:bg-transparent"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            View availability
+                                          </Button>
+                                        </DropdownMenuTrigger>
+
+                                        <DropdownMenuContent
+                                          side="bottom"
+                                          align="start"
+                                          sideOffset={8}
+                                          className="w-72 p-0"
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          {/* Dates */}
+                                          <div className="flex justify-between px-4 py-3 text-center border-b">
+                                            {[
+                                              "Mon",
+                                              "Tue",
+                                              "Wed",
+                                              "Thu",
+                                              "Fri",
+                                              "Sat",
+                                              "Sun",
+                                            ].map((day, i) => (
+                                              <div key={day}>
+                                                <p className="text-xs text-gray-400">
+                                                  {day}
+                                                </p>
+                                                <div
+                                                  className={`mt-1 w-8 h-8 flex items-center justify-center rounded-full text-sm ${
+                                                    i === 0
+                                                      ? "bg-custom-teal text-white"
+                                                      : "text-gray-700"
+                                                  }`}
+                                                >
+                                                  {5 + i}
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </DropdownMenuContent>
+                                      </DropdownMenu>
                                     </div>
                                   </div>
                                 </div>
