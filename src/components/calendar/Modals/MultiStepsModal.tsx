@@ -18,6 +18,8 @@ import {
 import { Label } from "@/components/ui/label";
 import SearchCarerDropdown from "@/components/SearchCareerDropdown";
 import type { Client } from "@/helpers/common";
+import type { PublishShiftWorkflowPayload } from "@/features/api/types";
+import ActionCard from "@/components/ActionCard";
 
 /* ---------------- Types ---------------- */
 
@@ -30,6 +32,7 @@ interface Visit {
   date: string;
   time: string;
   location: string;
+  carerId: string;
 }
 
 type ActionType =
@@ -54,6 +57,12 @@ interface Carer {
   hours: number;
 }
 
+const actionLabels: Record<string, string> = {
+  moveToVacant: "Move to Vacant",
+  cancel: "Cancel",
+  reverseCancellation: "Reverse Cancellation",
+};
+
 /* ---------------- Dummy Data ---------------- */
 
 const visits: Visit[] = [
@@ -64,6 +73,7 @@ const visits: Visit[] = [
     date: "Mon, 13 Jan",
     time: "09:00 - 17:00",
     location: "2435",
+    carerId: "20",
   },
   {
     id: 2,
@@ -72,6 +82,7 @@ const visits: Visit[] = [
     date: "Tue, 14 Jan",
     time: "10:00 - 18:00",
     location: "1982",
+    carerId: "69",
   },
   {
     id: 3,
@@ -80,6 +91,7 @@ const visits: Visit[] = [
     date: "Wed, 15 Jan",
     time: "08:00 - 16:00",
     location: "3021",
+    carerId: "59",
   },
   {
     id: 4,
@@ -88,6 +100,7 @@ const visits: Visit[] = [
     date: "Wed, 19 Jan",
     time: "18:00 - 20:00",
     location: "2390",
+    carerId: "89",
   },
 ];
 
@@ -138,6 +151,49 @@ export default function MultiStepModal({
     action: null,
   });
 
+  /* ---------------- Api Payload ---------------- */
+  const buildPayload = (): PublishShiftWorkflowPayload | null => {
+    if (!workflow.action) return null;
+
+    switch (workflow.action) {
+      case "reassign":
+        return {
+          action: "reassign",
+          visitIds: workflow.selectedVisitIds,
+          previousCarers: previousCarerNames,
+          newCarer: {
+            id: workflow.targetCarerId,
+            name: selectedCarerName,
+          },
+        };
+
+      case "cancel":
+        return {
+          action: "cancel",
+          visitIds: workflow.selectedVisitIds,
+          cancellation: {
+            reason: workflow.cancelReason,
+            comments: workflow.cancelComments,
+          },
+        };
+
+      case "moveToVacant":
+        return {
+          action: "moveToVacant",
+          visitIds: workflow.selectedVisitIds,
+        };
+
+      case "reverseCancellation":
+        return {
+          action: "reverseCancellation",
+          visitIds: workflow.selectedVisitIds,
+        };
+
+      default:
+        return null;
+    }
+  };
+
   /* ---------------- Visit Selection ---------------- */
 
   const eligibleVisits = visits
@@ -157,6 +213,22 @@ export default function MultiStepModal({
       prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id],
     );
   };
+
+  const previousCarerNames = Array.from(
+    new Set(
+      workflow.selectedVisitIds
+        .map((id) => visits.find((v) => v.id === id)?.name)
+        .filter(Boolean),
+    ),
+  ).join(", ");
+
+  function getInitials(name: string): string {
+    return name
+      .trim()
+      .split(/\s+/) // split by spaces
+      .map((word) => word[0]?.toUpperCase())
+      .join("");
+  }
 
   /* ---------------- Navigation ---------------- */
 
@@ -213,13 +285,17 @@ export default function MultiStepModal({
     c.title.toLowerCase().includes(carerSearch.toLowerCase()),
   );
 
+  const selectedCarerName = workflow.targetCarerId
+    ? carerClients.find((c) => c.id === String(workflow.targetCarerId))?.title
+    : "Not selected";
+
   const toggleClientSelection = (client: Client) => {
-    setSelectedClients(
-      (prev) =>
-        prev.some((c) => c.id === client.id)
-          ? prev.filter((c) => c.id !== client.id)
-          : [client], // single select
-    );
+    setSelectedClients([client]); // single select
+
+    setWorkflow((prev) => ({
+      ...prev,
+      targetCarerId: Number(client.id),
+    }));
   };
 
   const confirmCarerSelection = () => {
@@ -603,20 +679,51 @@ export default function MultiStepModal({
                       {workflow.selectedVisitIds.length} Shifts
                     </p>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm">Action: </p>
-                    <p className="text-sm text-black dark:text-white font-medium">
-                      {workflow.action === "moveToVacant"
-                        ? "Move to Vacant"
-                        : workflow.action === "reassign"
-                          ? "Reassign Carer"
-                          : workflow.action === "cancel"
-                            ? "Cancel"
-                            : workflow.action === "reverseCancellation"
-                              ? "Reverse Cancellation"
-                              : "Unknown"}
-                    </p>
-                  </div>
+                  {workflow.action && actionLabels[workflow.action] && (
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm">Action:</p>
+                      <p className="text-sm text-black dark:text-white font-medium">
+                        {actionLabels[workflow.action]}
+                      </p>
+                    </div>
+                  )}
+                  {workflow.action === "reassign" && (
+                    <>
+                      <div className="flex flex-col gap-1 bg-card my-2 py-3 px-2 rounded border border-gray-200 text-sm text-gray-500">
+                        <div className="flex items-center justify-between">
+                          <p>Previous carer:</p>
+                          <div className="flex flex-row items-center gap-2">
+                            <div className="h-5 w-5 p-3.5 rounded-full bg-blue-300 text-white flex justify-center items-center text-xs">
+                              <p>{getInitials(previousCarerNames)}</p>
+                            </div>
+                            <p className="text-sm font-medium">
+                              {previousCarerNames || "Not available"}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs">
+                          <Checkbox />
+                          <p>add as shift drop in carer profile.</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm">New carer:</p>
+                        {workflow.targetCarerId && selectedCarerName ? (
+                          <div className="flex items-center gap-2">
+                            <div className="h-5 w-5 p-3.5 rounded-full bg-red-500 text-white flex justify-center items-center text-xs">
+                              <p>{getInitials(selectedCarerName)}</p>
+                            </div>
+                            <p className="text-sm text-black dark:text-white font-medium">
+                              {selectedCarerName}
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-500">Not selected</p>
+                        )}
+                      </div>
+                    </>
+                  )}
+
                   {workflow.action === "cancel" && (
                     <div className="flex items-center justify-between text-sm text-gray-500">
                       <p>Cancellation reason:</p>
@@ -685,55 +792,30 @@ export default function MultiStepModal({
           )}
 
           <Button
-            onClick={next}
             className={BTN_CLASSES_Third}
             disabled={
-              step === 2 &&
-              workflow.action === "cancel" &&
-              !workflow.cancelReason
+              (step === 2 &&
+                workflow.action === "cancel" &&
+                !workflow.cancelReason) ||
+              (step === 2 &&
+                workflow.action === "reassign" &&
+                !workflow.targetCarerId)
             }
+            onClick={() => {
+              if (step === 3) {
+                const payload = buildPayload();
+                console.log("Payload", payload);
+                close();
+                return;
+              }
+
+              next();
+            }}
           >
             {step === 3 ? "Save" : step === 2 ? "Next : Review" : "Next"}
           </Button>
         </div>
       }
     />
-  );
-}
-
-/* ---------------- Action Card ---------------- */
-
-function ActionCard({
-  title,
-  description,
-  selected,
-  onClick,
-  disabled = false,
-}: {
-  title: string;
-  description: string;
-  selected: boolean;
-  onClick: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <div
-      className={`text-left border rounded p-4 transition ${
-        selected ? "border-custom-teal" : "border-gray-300"
-      } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-      onClick={!disabled ? onClick : undefined}
-    >
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <Checkbox
-            checked={selected}
-            onCheckedChange={onClick}
-            disabled={disabled}
-          />
-          <p className="font-medium text-black dark:text-white">{title}</p>
-        </div>
-        <p className="text-sm text-gray-600">{description}</p>
-      </div>
-    </div>
   );
 }
